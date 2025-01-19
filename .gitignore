@@ -12,3 +12,5 @@ dist/
 .npmrc
 .tsbuildinfo*
 .rollup.cache
+
+_TESTPATH
