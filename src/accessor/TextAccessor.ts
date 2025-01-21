@@ -51,7 +51,7 @@ class TextAccessor implements IAccessor {
     }
     #ensureNotDropped() {
         if (this.dropped) {
-            throw new AccessorError('The accessor has been dropped');
+            throw new AccessorError('This accessor has been dropped');
         }
     }
 }

@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
-import type { IAccessor } from './types';
+import type { IJSONAccessor } from './types';
 import { AccessorError } from './errors';
 
-class JSONAccessor implements IAccessor {
+class JSONAccessor implements IJSONAccessor {
     #filePath:string;
     #dropped:boolean = false;
     #contents:{[key:string]:any};
@@ -32,18 +32,6 @@ class JSONAccessor implements IAccessor {
 
         fs.writeFileSync(this.#filePath, jsonString, 'utf8');
     }
-    drop() {
-        if (this.dropped) return;
-
-        this.#dropped = true;
-
-        if (fs.existsSync(this.#filePath)) {
-            fs.rmSync(this.#filePath, { force: true });
-        }
-    }
-    get dropped() {
-        return this.#dropped;
-    }
     set(key:string, value:any) {
         this.#ensureNotDropped();
         
@@ -65,15 +53,27 @@ class JSONAccessor implements IAccessor {
 
         delete this.#contents[key];
     }
+    
     commit() {
         this.#ensureNotDropped();
 
         this.#writeFile();
     }
+    drop() {
+        if (this.dropped) return;
 
+        this.#dropped = true;
+
+        if (fs.existsSync(this.#filePath)) {
+            fs.rmSync(this.#filePath, { force: true });
+        }
+    }
+    get dropped() {
+        return this.#dropped;
+    }
     #ensureNotDropped() {
         if (this.dropped) {
-            throw new AccessorError('The accessor has been dropped');
+            throw new AccessorError('This accessor has been dropped');
         }
     }
 }
