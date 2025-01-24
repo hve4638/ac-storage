@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { IAccessor, BinaryAccessor, JSONAccessor, TextAccessor } from './accessor';
 import StorageAccessControl, { AccessTree, StorageAccess } from './access-control';
-import { StorageError } from '.';
+import { StorageError } from './errors';
 import IStorage from './IStorage';
 import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from './accessor/types';
 
