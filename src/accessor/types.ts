@@ -5,10 +5,13 @@ export interface IAccessor {
 }
 
 export interface IJSONAccessor extends IAccessor {
-    set(key:string, value:any):void;
-    get(key:string):any;
-    getAll():{[key:string]:any};
-    remove(key:string):void;
+    set(items:Record<string, any>):void;
+    setOne(key:string, value:any):void;
+    get(keys:string[]):any;
+    getOne(key:string):any;
+    getAll():Record<string, any>;
+    remove(keys:string[]):void;
+    removeOne(key:string):void;
 }
 
 export interface ITextAccessor extends IAccessor {

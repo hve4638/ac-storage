@@ -7,4 +7,7 @@ module.exports = {
     moduleFileExtensions: ['ts', 'js'],
     transformIgnorePatterns: ['<rootDir>/node_modules/'],
     testMatch: ['<rootDir>/src/**/*.(spec|test).ts'],
+    moduleNameMapper: {
+        '^types/(.*)$': '<rootDir>/src/types/$1',
+    },
 };
