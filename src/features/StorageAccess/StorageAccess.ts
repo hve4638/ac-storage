@@ -1,5 +1,5 @@
 import type { JSONTree } from 'types/json';
-import type { Accesses, NonUnionAccesses } from './types';
+import type { Accesses, NonUnionAccesses, UnionAccess } from './types';
 
 class StorageAccess {
     static Nothing():Accesses { return {accessType : 'nothing'} };
@@ -12,7 +12,7 @@ class StorageAccess {
         return { accessType : 'custom', args, id };
 
     }
-    static Union(...accesses:Accesses[]) {
+    static Union(...accesses:Accesses[]):UnionAccess {
         return { accessType : 'union', accesses };
     }
 }

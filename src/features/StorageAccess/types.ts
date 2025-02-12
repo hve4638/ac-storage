@@ -16,7 +16,7 @@ export type CustomAccess = {
 }
 export type UnionAccess = {
     accessType : 'union',
-    accesses : NonUnionAccesses[]
+    accesses : Accesses[]
 }
 
 export type NonUnionAccesses = BasicAccess | JSONAccess | CustomAccess;
