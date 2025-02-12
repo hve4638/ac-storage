@@ -130,7 +130,7 @@ class JSONAccessor implements IJSONAccessor {
             const newKey = prefix ? `${prefix}.${key}` : key;
             
             const jsonType = this.explorer?.get(newKey);
-            if (jsonType == null) {
+            if (this.explorer && jsonType == null) {
                 throw new AccessorError(`Field '${key}' is not allowed to be set`);
             }
             else if (jsonType === JSONType.object) {

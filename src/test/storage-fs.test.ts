@@ -132,4 +132,42 @@ describe('FSStorage FS Test', () => {
         storage.dropAccessor('base:config.json');
         verifyState({ base : true, config: false, data: true }, 4);
     });
+
+    test('파일 이동', ()=>{
+        const prevPath = path.join(testDirectory, 'prev.json');
+        const nextPath = path.join(testDirectory, 'next.json');
+        const data = {
+            a : 1,
+            b : 2,
+            c : 3,
+        }
+        
+        // 0. 초기 상태
+        expect(isFile(prevPath)).toBeFalsy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 1. 저장소 등록
+        storage.register({
+            '*' : StorageAccess.JSON(),
+        });
+        
+        // 2. 저장소 생성
+        let prev = storage.getJSONAccessor('prev.json');
+        prev.set(data);
+        prev.commit();
+
+        expect(isFile(prevPath)).toBeTruthy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 3. 새 저장소 생성 및 이동
+        let next = storage.getJSONAccessor('next.json');
+        next.set(prev.getAll());
+        prev.drop();
+        next.commit();
+
+        expect(isFile(prevPath)).toBeFalsy();
+        expect(isFile(nextPath)).toBeTruthy();
+
+        expect(next.getAll()).toEqual(data);
+    })
 });
