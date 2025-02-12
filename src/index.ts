@@ -24,3 +24,7 @@ export {
     type Accesses,
     type AccessType
 } from './features/StorageAccess';
+export {
+    type JSONTree,
+    JSONType
+} from './types/json'

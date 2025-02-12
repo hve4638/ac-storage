@@ -63,6 +63,64 @@ describe('JSONAccessor : key type', () => {
     });
 });
 
+describe('JSONAccessor : multiple R/W', () => {
+    let accessor:MemJSONAccessor;
+    
+    beforeEach(() => {
+        accessor = new MemJSONAccessor({
+            box1 : {
+                name : JSONType.string,
+                id : JSONType.string,
+                no : JSONType.number,
+                addition : {
+                    x : JSONType.number,
+                    y : JSONType.number,
+                }
+            },
+            box2 : {
+                name : JSONType.string,
+                id : JSONType.string,
+                no : JSONType.number,
+                addition : {
+                    x : JSONType.number,
+                    y : JSONType.number,
+                }
+            }
+        });
+    });
+
+    test('set', () => {
+        accessor.set([
+            ['box1.name', 'box1'],
+            ['box1.id', 'id1'],
+            ['box1.no', 1],
+            ['box1.addition.x', 10],
+            ['box1.addition.y', 20],
+        ]);
+
+        const expected = {
+            box1 : {
+                name : 'box1',
+                id : 'id1',
+                no : 1,
+                addition : {
+                    x : 10,
+                    y : 20,
+                }
+            }
+
+        }
+        const actual = accessor.get([
+            'box1.name',
+            'box1.id',
+            'box1.no',
+            'box1.addition.x',
+            'box1.addition.y',
+        ]);
+        expect(actual).toEqual(expected);
+    });
+});
+
 describe('JSONAccessor : raw access', () => {
     let accessor:MemJSONAccessor;
 
