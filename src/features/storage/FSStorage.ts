@@ -1,10 +1,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { IAccessor, BinaryAccessor, JSONAccessor, TextAccessor } from './accessor';
-import StorageAccessControl, { AccessTree, StorageAccess } from './access-control';
+
+import { IAccessor, BinaryAccessor, JSONAccessor, TextAccessor } from '../../features/accessors';
+import StorageAccessControl, { AccessTree } from '../../features/StorageAccessControl';
+import StorageAccess, { Accesses, AccessType } from '../../features/StorageAccess';
+import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from '../../features/accessors/types';
+
 import { StorageError } from './errors';
 import IStorage from './IStorage';
-import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from './accessor/types';
 
 type AccessorEvent = {
     create: (actualPath:string)=>IAccessor;
@@ -12,7 +15,7 @@ type AccessorEvent = {
 
 class FSStorage implements IStorage {
     protected basePath: string;
-    protected customAccessorEvent: Map<number, AccessorEvent> = new Map();
+    protected customAccessEvents: Record<string, AccessorEvent> = {};
     protected accessors:Map<string, IAccessor> = new Map();
 
     protected accessControl:StorageAccessControl;
@@ -25,7 +28,7 @@ class FSStorage implements IStorage {
 
     protected initAccessControl():StorageAccessControl {
         return new StorageAccessControl({
-            onAccess: (identifier:string, accessType:StorageAccess) => {
+            onAccess: (identifier:string, sa:Accesses) => {
                 const targetPath = path.join(this.basePath, identifier.replaceAll(':', '/'));
 
                 let item = this.accessors.get(identifier);
@@ -34,18 +37,18 @@ class FSStorage implements IStorage {
                 }
 
                 let accessor:IAccessor;
-                switch(accessType) {
-                    case StorageAccess.JSON:
+                switch(sa.accessType) {
+                    case 'json':
                         accessor = new JSONAccessor(targetPath);
                         break;
-                    case StorageAccess.BINARY:
+                    case 'binary':
                         accessor = new BinaryAccessor(targetPath);
                         break;
-                    case StorageAccess.TEXT:
+                    case 'text':
                         accessor = new TextAccessor(targetPath);
                         break;
                     default:
-                        const event = this.customAccessorEvent.get(accessType);
+                        const event = this.customAccessEvents[sa.accessType];
                         if (!event) {
                             throw new StorageError('Invalid access type');
                         }
@@ -91,31 +94,20 @@ class FSStorage implements IStorage {
         this.accessControl.register(tree);
     }
 
-    setAlias(alias:string, identifier:string) {
-        this.aliases.set(alias, identifier);
-    }
-
-    deleteAlias(alias:string) {
-        this.aliases.delete(alias);
-    }
-
-    addAccessorEvent(event:AccessorEvent) {
-        const customType = this.accessControl.addAccessType();
-        this.customAccessorEvent.set(customType, event);
-
-        return customType;
+    addAccessEvent(customId:string, event:AccessorEvent) {
+        this.customAccessEvents[customId] = event;
     }
 
     getJSONAccessor(identifier:string):IJSONAccessor {
-        return this.getAccessor(identifier, StorageAccess.JSON) as IJSONAccessor;
+        return this.getAccessor(identifier, 'json') as IJSONAccessor;
     }
     getTextAccessor(identifier:string):ITextAccessor {
-        return this.getAccessor(identifier, StorageAccess.TEXT) as ITextAccessor;
+        return this.getAccessor(identifier, 'text') as ITextAccessor;
     }
     getBinaryAccessor(identifier:string):IBinaryAccessor {
-        return this.getAccessor(identifier, StorageAccess.BINARY) as IBinaryAccessor;
+        return this.getAccessor(identifier, 'binary') as IBinaryAccessor;
     }
-    getAccessor(identifier:string, accessType:number):IAccessor {
+    getAccessor(identifier:string, accessType:AccessType):IAccessor {
         if (this.aliases.has(identifier)) {
             identifier = this.aliases.get(identifier)!;
         }
@@ -123,13 +115,13 @@ class FSStorage implements IStorage {
     }
 
     dropDir(identifier:string) {
-        if (this.accessControl.getRegisterBit(identifier) !== StorageAccess.DIR) {
-            throw new StorageError(`FSStorage '${identifier}' is not a directory`);
-        }
-
+        this.accessControl.validateDirectoryPath(identifier);
+        
         const child = `${identifier}:`;
         const childIdentifiers = Array.from(this.accessors.keys()).filter((key)=>key.startsWith(child));
         childIdentifiers.forEach((id) => this.dropAccessor(id));
+        
+        this.accessControl.releaseDir(identifier);
     }
 
     dropAccessor(identifier:string) {

@@ -1,4 +1,4 @@
-import { StorageError } from '../errors';
+import { StorageError } from '../storage/errors';
 
 export class StorageAccessError extends StorageError {
     constructor(message:string) {

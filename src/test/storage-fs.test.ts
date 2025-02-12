@@ -2,7 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TEST_PATH } from '../test-utils';
 
-import { FSStorage, StorageAccess } from '..';
+import { FSStorage } from '../features/storage';
+import StorageAccess from '../features/StorageAccess';
 
 function isFile(filename:string) {
     if (!fs.existsSync(filename)) {
@@ -42,7 +43,7 @@ describe('FSStorage FS Test', () => {
         storage.dropAllAccessor();
     });
     
-    test('개별파일 FSStorage FS 연동', () => {
+    test('파일 FSStorage FS 연동', () => {
         const configPath = path.join(testDirectory, 'config.json');
         const dataPath = path.join(testDirectory, 'data.txt');
         const verifyState = (expected: { config: boolean, data: boolean }, comment:any='') => {
@@ -62,8 +63,8 @@ describe('FSStorage FS Test', () => {
 
         // 1. 저장소 등록
         storage.register({
-            'config.json' : StorageAccess.JSON,
-            'data.txt' : StorageAccess.TEXT,
+            'config.json' : StorageAccess.JSON(),
+            'data.txt' : StorageAccess.Text(),
         });
         verifyState({ config: false, data: false }, 1);
 
@@ -109,7 +110,10 @@ describe('FSStorage FS Test', () => {
         // 1. 저장소 등록
         storage.register({
             'base' : {
-                '*' : StorageAccess.ANY,
+                '*' : StorageAccess.Union(
+                    StorageAccess.JSON(),
+                    StorageAccess.Text(),
+                ),
             },
         });
         verifyState({ base : false, config: false, data: false }, 1);

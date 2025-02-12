@@ -1,7 +1,9 @@
-import { IAccessor, MemTextAccessor, MemBinaryAccessor, MemJSONAccessor } from './accessor';
-import StorageAccessControl, { StorageAccess } from './access-control';
+import { IAccessor, MemTextAccessor, MemBinaryAccessor, MemJSONAccessor } from '../../features/accessors';
+import { Accesses } from '../../features/StorageAccess';
+import StorageAccessControl from '../../features/StorageAccessControl';
 import { StorageError } from './errors';
 import FSStorage from './FSStorage';
+
 
 class MemStorage extends FSStorage {
     constructor() {
@@ -10,21 +12,21 @@ class MemStorage extends FSStorage {
 
     override initAccessControl() {
         return new StorageAccessControl({
-            onAccess: (identifier:string, accessType:StorageAccess) => {
+            onAccess: (identifier:string, sa:Accesses) => {
                 let item = this.accessors.get(identifier);
                 if (item != undefined && !item.dropped) {
                     return item;
                 }
 
                 let accessor:IAccessor;
-                switch(accessType) {
-                    case StorageAccess.JSON:
+                switch(sa.accessType) {
+                    case 'json':
                         accessor = new MemJSONAccessor();
                         break;
-                    case StorageAccess.BINARY:
+                    case 'binary':
                         accessor = new MemBinaryAccessor();
                         break;
-                    case StorageAccess.TEXT:
+                    case 'text':
                         accessor = new MemTextAccessor();
                         break;
                     default:

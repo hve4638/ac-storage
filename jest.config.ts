@@ -9,5 +9,6 @@ module.exports = {
     testMatch: ['<rootDir>/src/**/*.(spec|test).ts'],
     moduleNameMapper: {
         '^types/(.*)$': '<rootDir>/src/types/$1',
+        '^features/(.*)$': '<rootDir>/src/features/$1',
     },
 };

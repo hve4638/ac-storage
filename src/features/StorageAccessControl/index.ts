@@ -1,7 +1,4 @@
 import StorageAccessControl from './StorageAccessControl';
-export {
-    StorageAccess,
-} from './types';
 export type {
     AccessTree,
     StorageAccessControlEvent,

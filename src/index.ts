@@ -1,8 +1,26 @@
-export type { default as IStorage } from './IStorage';
-export type { IAccessor, IBinaryAccessor, IJSONAccessor, ITextAccessor } from './accessor/types';
-export type { AccessTree } from './access-control';
-export { StorageAccess } from './access-control';
-export { default as FSStorage } from './FSStorage';
-export { default as MemStorage } from './MemStorage';
-export { StorageError } from './errors';
-
+export type {
+    IAccessor,
+    IBinaryAccessor,
+    IJSONAccessor,
+    ITextAccessor
+} from './features/accessors';
+export {
+    default as StorageAccessControl,
+    type AccessTree,
+    
+    AccessDeniedError,
+    DirectoryAccessError,
+    NotRegisterError,
+    StorageAccessError,
+} from './features/StorageAccessControl';
+export {
+    type IStorage,
+    FSStorage,
+    MemStorage,
+    StorageError
+} from './features/storage';
+export {
+    default as StorageAccess,
+    type Accesses,
+    type AccessType
+} from './features/StorageAccess';

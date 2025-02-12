@@ -1,8 +1,9 @@
 import * as fs from 'node:fs';
+import TreeExplorer from '../../../features/TreeExplorer';
+
+import { JSONTree, JSONType } from 'types/json';
 import type { IJSONAccessor } from '../types';
 import { AccessorError } from '../errors';
-import { JSONTree, JSONType } from 'types/json';
-import TreeExplorer from '../../TreeExplorer';
 
 class JSONAccessor implements IJSONAccessor {
     private filePath:string;
@@ -48,48 +49,30 @@ class JSONAccessor implements IJSONAccessor {
 
     setOne(key:string, value:any) {
         this.#ensureNotDropped();
-        this.#ensureFieldExists(key);
-        const dataType = this.#getDataType(value);
-        const allowedType = this.#getFieldType(key);
-        if (allowedType === JSONType.null) {
-            throw new AccessorError(`Field '${key}' does not exist`);
-        }
-        if ((dataType & allowedType) === 0) {
-            throw new AccessorError(`Field '${key}' is not allowed to be set`);
-        }
         
-        this.contents[key] = value;
+        this.checkAndSetData(key, value);
     }
     set(data:[string, any][]) {
         this.#ensureNotDropped();
         // this.#ensureFieldExists(key);
         for (const [key, value] of data) {
-            const dataType = this.#getDataType(value);
-            const allowedType = this.#getFieldType(key);
-            if (allowedType === JSONType.null) {
-                throw new AccessorError(`Field '${key}' does not exist`);
-            }
-            if ((dataType & allowedType) === 0) {
-                throw new AccessorError(`Field '${key}' is not allowed to be set`);
-            }
-
-            this.contents[key] = value;
+            this.checkAndSetData(key, value);
         }
     }
     getOne(key:string) {
         this.#ensureNotDropped();
-        this.#ensureFieldExists(key);
         
-        return this.contents[key];
+        return this.checkAndGetData(key);
     }
     get(keys:string[]) {
         this.#ensureNotDropped();
         
         const result:Record<string,any> = {};
         for (const key of keys) {
-            this.#ensureFieldExists(key);
+            const value = this.checkAndGetData(key);
 
-            result[key] = this.contents[key];
+            const resolved = this.resolveContentsPath(result, key, true)!;
+            resolved.ref[resolved.key] = value;
         }
         
         return result;
@@ -102,13 +85,13 @@ class JSONAccessor implements IJSONAccessor {
     removeOne(key:string) {
         this.#ensureNotDropped();
 
-        delete this.contents[key];
+        this.checkAndRemoveData(key);
     }
     remove(keys:string[]) {
         this.#ensureNotDropped();
 
         for (const key of keys) {
-            delete this.contents[key];
+            this.checkAndRemoveData(key);
         }
     }
     
@@ -128,21 +111,36 @@ class JSONAccessor implements IJSONAccessor {
     }
 
     private checkAndSetData(key:string, value:any) {
-        const allowedType = this.getKeyType(key);
+        const allowedType = this.checkAndGetKeyType(key);
         const dataType = this.getDataType(value);
         if ((allowedType & dataType) === 0) {
             throw new AccessorError(`Field '${key}' is not allowed to be set`);
         }
         
+        const resolved = this.resolveContentsPath(this.contents, key, true);
+        if (resolved) {
+            resolved.ref[resolved.key] = value;
+        }
     }
     private checkAndGetData(key:string) {
-        this.#getTreeResult(key);
+        this.checkAndGetKeyType(key);
+
+        const resolved = this.resolveContentsPath(this.contents, key);
+        if (resolved) {
+            return resolved.ref[resolved.key];
+        }
+        else {
+            return undefined;
+        }
     }
     private checkAndRemoveData(key:string) {
-
+        this.checkAndGetKeyType(key);
+        
+        const resolved = this.resolveContentsPath(this.contents, key);
+        if (resolved) delete resolved.ref[resolved.key];
     }
 
-    private getKeyType(key:string) {
+    private checkAndGetKeyType(key:string) {
         if (this.explorer) {
             const result = this.explorer.get(key);
             if (result == null) {
@@ -176,21 +174,25 @@ class JSONAccessor implements IJSONAccessor {
                 return JSONType.null;
         }
     }
-    private findContentsRef(target:string, lastRef:(ref:string, key:string)=>void) {
+    private resolveContentsPath(contents:Record<string,any>, target:string, createIfMissing:boolean=false) {
         const keys = target.split('.');
 
-        let ref = this.contents;
+        let ref:any = contents;
 
         const size = keys.length-1;
         for (let i=0; i<size; i++) {
-            const key 
+            const key = keys[i];
             if (!(key in ref)) {
+                if (!createIfMissing) return undefined;
+
                 ref[key] = {};
             }
             ref = ref[key];
         }
-
-
+        return {
+            ref,
+            key : keys[size],
+        }
     }
 
     #ensureNotDropped() {

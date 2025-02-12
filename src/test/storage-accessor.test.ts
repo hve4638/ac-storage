@@ -2,19 +2,24 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TEST_PATH } from '../test-utils';
 
-import { FSStorage, StorageAccess } from '..';
+import { type IStorage, MemStorage } from '../features/storage';
+import StorageAccess from '../features/StorageAccess';
 
-describe('FSStorage Accessor Test', () => {
+describe('Storage Accessor Test', () => {
     const testDirectory = path.join(TEST_PATH, 'storage-accessor');
-    let storage:FSStorage;
+    let storage:IStorage;
     
     beforeAll(() => {
         fs.mkdirSync(testDirectory, { recursive: true });
     });
     beforeEach(() => {
-        storage = new FSStorage(testDirectory);
+        storage = new MemStorage();
         storage.register({
-            '**/*' : StorageAccess.ANY,
+            '**/*' : StorageAccess.Union(
+                StorageAccess.JSON(),
+                StorageAccess.Text(),
+                StorageAccess.Binary(),
+            ),
         });
     });
     afterEach(() => {
@@ -24,10 +29,10 @@ describe('FSStorage Accessor Test', () => {
     test('JSONAccessor', () => {
         const accessor = storage.getJSONAccessor('config.json');
 
-        expect(accessor.get('key1')).toBeUndefined(); 
+        expect(accessor.getOne('key1')).toBeUndefined(); 
 
-        accessor.set('key1', 'value1');
-        expect(accessor.get('key1')).not.toBeUndefined();
+        accessor.setOne('key1', 'value1');
+        expect(accessor.getOne('key1')).not.toBeUndefined();
     });
 
     test('TextAccessor', () => {

@@ -1,5 +1,7 @@
 import { JSONTree } from './json';
 
+export type StorageAccessTypeName = 'nothing' | 'text' | 'binary' | 'json' | 'custom' | 'union';
+
 export type BasicStorageAccessType = {
     accessType : 'nothing' | 'text' | 'binary'
 };
