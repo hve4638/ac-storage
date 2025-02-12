@@ -96,8 +96,6 @@ class StorageAccessControl {
             }
         }
         else {
-            const accessTypes:string[] = access.accesses.map((access) => access.accessType);
-
             for (const ac of access.accesses) {
                 if (ac.accessType === target) {
                     return ac;

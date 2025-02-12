@@ -1,0 +1,60 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { TEST_PATH } from '../test-utils';
+
+import { FSStorage, type IStorage, MemStorage } from '../features/storage';
+import StorageAccess from '../features/StorageAccess';
+import { IAccessor } from 'features/accessors';
+
+describe('Storage Accessor Test', () => {
+    const testDirectory = path.join(TEST_PATH, 'custom-accessor');
+    let storage:IStorage;
+    
+    beforeAll(() => {
+        fs.mkdirSync(testDirectory, { recursive: true });
+    });
+    beforeEach(() => {
+        storage = new FSStorage(testDirectory);
+        storage.register({
+            'item.array' : StorageAccess.Custom('array'),
+            'a.value' : StorageAccess.Custom('value', 0),
+            'b.value' : StorageAccess.Custom('value', 1),
+        });
+        storage.addAccessEvent('array', {
+            create(acutalPath) {
+                return {
+                    acutalPath,
+                    array : [],
+                    commit() {},
+                    drop() {},
+                    get dropped() { return false; },
+                };
+            }
+        });
+        storage.addAccessEvent('value', {
+            create(acutalPath, initValue) {
+                return {
+                    acutalPath,
+                    value : initValue,
+                    commit() {},
+                    drop() {},
+                    get dropped() { return false; },
+                };
+            }
+        });
+    });
+    afterEach(() => {
+        storage.dropAllAccessor();
+    });
+
+    test('CustomAccessor', () => {
+        const acItemArray = storage.getAccessor('item.array', 'custom') as any;
+        expect(acItemArray.array).toEqual([]);
+        
+        const acA = storage.getAccessor('a.value', 'custom') as any;
+        expect(acA.value).toEqual(0);
+
+        const acB = storage.getAccessor('b.value', 'custom') as any;
+        expect(acB.value).toEqual(1);
+    });
+});

@@ -2,9 +2,9 @@ import { IAccessor } from "../accessors";
 import StorageAccess, { Accesses } from '../../features/StorageAccess'
 
 export type AccessTree = {
-    [key:string]:AccessTree|StorageAccess;
-    '*'? : AccessTree|StorageAccess,
-    '**/*'? : StorageAccess,
+    [key:string]:AccessTree|Accesses;
+    '*'? : AccessTree|Accesses,
+    '**/*'? : Accesses,
     ''? : never,
     ':'? : never,
 }

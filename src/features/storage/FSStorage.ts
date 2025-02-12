@@ -10,7 +10,7 @@ import { StorageError } from './errors';
 import IStorage from './IStorage';
 
 type AccessorEvent = {
-    create: (actualPath:string)=>IAccessor;
+    create: (actualPath:string, ...args:any[])=>IAccessor;
 }
 
 class FSStorage implements IStorage {
@@ -47,12 +47,16 @@ class FSStorage implements IStorage {
                     case 'text':
                         accessor = new TextAccessor(targetPath);
                         break;
-                    default:
-                        const event = this.customAccessEvents[sa.accessType];
+                    case 'custom':
+                        const event = this.customAccessEvents[sa.id];
                         if (!event) {
                             throw new StorageError('Invalid access type');
                         }
-                        accessor = event.create(targetPath);
+                        accessor = event.create(targetPath, ...sa.args);
+                        break;
+                    default:
+                        // 일반적으로 도달해서는 안됨
+                        throw new StorageError('Invalid access type');
                         break;
                 }
                 this.accessors.set(identifier, accessor);

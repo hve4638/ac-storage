@@ -4,6 +4,7 @@ import { TEST_PATH } from '../test-utils';
 
 import { type IStorage, MemStorage } from '../features/storage';
 import StorageAccess from '../features/StorageAccess';
+import { IAccessor } from 'features/accessors';
 
 describe('Storage Accessor Test', () => {
     const testDirectory = path.join(TEST_PATH, 'storage-accessor');
