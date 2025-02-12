@@ -35,4 +35,15 @@ describe('TreeExplorer', () => {
         expect(explorer.walk('c:a')?.path).toEqual(['*', 'a']);
         expect(explorer.walk('c:b')?.path).toEqual(['**/*']);
     });
+    
+    test('bug', () => {
+        const explorer = new TreeExplorer(TREE, ':');
+        expect(explorer.get('b')).toEqual({
+            a : '2',
+            '*' : {
+                a : '3',
+                '*' : '0'
+            }
+        });
+    })
 });

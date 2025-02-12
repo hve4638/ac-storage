@@ -128,9 +128,18 @@ class JSONAccessor implements IJSONAccessor {
     private flattenObject(obj: Record<string, any>, prefix = ''): [string, any][] {
         return Object.entries(obj).flatMap(([key, value]) => {
             const newKey = prefix ? `${prefix}.${key}` : key;
-            if (typeof value === 'object' && value !== null) {
+            
+            const jsonType = this.explorer?.get(newKey);
+            if (jsonType == null) {
+                throw new AccessorError(`Field '${key}' is not allowed to be set`);
+            }
+            else if (jsonType === JSONType.object) {
+                return [[newKey, value]]; // Skip object type
+            }
+            else if (typeof value === 'object' && value !== null) {
                 return this.flattenObject(value, newKey);
-            } else {
+            }
+            else {
                 return [[newKey, value]];
             }
         });

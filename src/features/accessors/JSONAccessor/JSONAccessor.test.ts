@@ -202,3 +202,56 @@ describe('JSONAccessor : raw access', () => {
         });
     });
 });
+
+describe('JSONAccessor : x', () => {
+    let accessor:MemJSONAccessor;
+    
+    beforeEach(() => {
+        accessor = new MemJSONAccessor({
+            box : {
+                tree : JSONType.object,
+            },
+        });
+    });
+
+    test('set - arrray', () => {
+        accessor.set([
+            [
+                'box.tree',
+                {
+                    a : {
+                        value : 1
+                    }
+                }
+            ]
+        ]);
+
+        expect(accessor.getOne('box.tree')).toEqual(
+            {
+                a : {
+                    value : 1
+                }
+            }
+        );
+    });
+
+    test('set - object', () => {
+        accessor.set({
+            box : {
+                tree : {
+                    a : {
+                        value : 1
+                    }
+                }
+            }
+        });
+
+        expect(accessor.getOne('box.tree')).toEqual(
+            {
+                a : {
+                    value : 1
+                }
+            }
+        );
+    });
+});
