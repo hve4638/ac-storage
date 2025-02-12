@@ -98,7 +98,7 @@ class FSStorage implements IStorage {
         this.accessControl.register(tree);
     }
 
-    addAccessEvent(customId:string, event:AccessorEvent) {
+    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent) {
         this.customAccessEvents[customId] = event;
     }
 
@@ -111,7 +111,7 @@ class FSStorage implements IStorage {
     getBinaryAccessor(identifier:string):IBinaryAccessor {
         return this.getAccessor(identifier, 'binary') as IBinaryAccessor;
     }
-    getAccessor(identifier:string, accessType:AccessType):IAccessor {
+    getAccessor(identifier:string, accessType:string):IAccessor {
         if (this.aliases.has(identifier)) {
             identifier = this.aliases.get(identifier)!;
         }

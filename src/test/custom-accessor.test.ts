@@ -48,13 +48,13 @@ describe('Storage Accessor Test', () => {
     });
 
     test('CustomAccessor', () => {
-        const acItemArray = storage.getAccessor('item.array', 'custom') as any;
+        const acItemArray = storage.getAccessor('item.array', 'array') as any;
         expect(acItemArray.array).toEqual([]);
         
-        const acA = storage.getAccessor('a.value', 'custom') as any;
+        const acA = storage.getAccessor('a.value', 'value') as any;
         expect(acA.value).toEqual(0);
 
-        const acB = storage.getAccessor('b.value', 'custom') as any;
+        const acB = storage.getAccessor('b.value', 'value') as any;
         expect(acB.value).toEqual(1);
     });
 });

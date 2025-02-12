@@ -21,3 +21,4 @@ export type UnionAccess = {
 
 export type NonUnionAccesses = BasicAccess | JSONAccess | CustomAccess;
 export type Accesses = NonUnionAccesses | UnionAccess;
+

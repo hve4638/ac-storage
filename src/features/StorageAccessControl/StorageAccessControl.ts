@@ -20,7 +20,7 @@ class StorageAccessControl {
         this.accessTree = new TreeExplorer(tree, ':', true);
     }
     
-    access(identifier:string, accessType:AccessType):IAccessor {
+    access(identifier:string, accessType:string):IAccessor {
         const walked = this.accessTree.walk(identifier);
         if (!walked) {
             throw new NotRegisterError(`'${identifier}' is not registered.`);
@@ -70,7 +70,7 @@ class StorageAccessControl {
         }
     }
 
-    private validateAndResolveAccess(access:Accesses, target:AccessType, identifier:string):Accesses {
+    private validateAndResolveAccess(access:Accesses, target:string, identifier:string):Accesses {
         if (this.checkAccessIsDirectory(access)) {
             throw new DirectoryAccessError(`'${identifier}' is directory.`);
         }
@@ -86,9 +86,12 @@ class StorageAccessControl {
      * 
      * UnionAccess의 경우, target에 해당하는 Access를 찾아 반환
      */
-    private resolveAccess(access:Accesses, target:AccessType):Accesses|null {
+    private resolveAccess(access:Accesses, target:string):Accesses|null {
         if (access.accessType !== 'union') {
             if (access.accessType === target) {
+                return access;
+            }
+            else if (access.accessType === 'custom' && access.id === target) {
                 return access;
             }
             else {
@@ -98,6 +101,9 @@ class StorageAccessControl {
         else {
             for (const ac of access.accesses) {
                 if (ac.accessType === target) {
+                    return ac;
+                }
+                else if (ac.accessType === 'custom' && ac.id === target) {
                     return ac;
                 }
             }
