@@ -5,7 +5,7 @@ export interface IAccessor {
 }
 
 export interface IJSONAccessor extends IAccessor {
-    set(items:Record<string, any>):void;
+    set(items:Record<string, any>):string[];
     setOne(key:string, value:any):void;
     get(keys:string[]):any;
     getOne(key:string):any;

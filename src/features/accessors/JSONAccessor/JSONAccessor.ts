@@ -5,6 +5,8 @@ import { JSONTree, JSONType } from 'types/json';
 import type { IJSONAccessor } from '../types';
 import { AccessorError } from '../errors';
 
+type KeyValueInput = [string, any][] | Record<string, any>;
+
 class JSONAccessor implements IJSONAccessor {
     private filePath:string;
     private isDropped:boolean = false;
@@ -42,8 +44,10 @@ class JSONAccessor implements IJSONAccessor {
         fs.writeFileSync(this.filePath, jsonString, 'utf8');
     }
     protected removeFile() {
-        if (fs.existsSync(this.filePath)) {
+        try {
             fs.rmSync(this.filePath, { force: true });
+        } catch (error) {
+            console.warn(`Failed to remove file ${this.filePath}:`, error);
         }
     }
 
@@ -52,12 +56,23 @@ class JSONAccessor implements IJSONAccessor {
         
         this.checkAndSetData(key, value);
     }
-    set(data:[string, any][]) {
+    set(data: KeyValueInput):string[] {
         this.#ensureNotDropped();
-        // this.#ensureFieldExists(key);
-        for (const [key, value] of data) {
+
+        let setterList:[string, any][] = [];
+        if (Array.isArray(data)) {
+            setterList = data;
+        }
+        else {
+            setterList = this.flattenObject(data);
+        }
+
+        let names:string[] = [];
+        for (const [key, value] of setterList) {
+            names.push(key);
             this.checkAndSetData(key, value);
         }
+        return names;
     }
     getOne(key:string) {
         this.#ensureNotDropped();
@@ -110,6 +125,17 @@ class JSONAccessor implements IJSONAccessor {
         return this.isDropped;
     }
 
+    private flattenObject(obj: Record<string, any>, prefix = ''): [string, any][] {
+        return Object.entries(obj).flatMap(([key, value]) => {
+            const newKey = prefix ? `${prefix}.${key}` : key;
+            if (typeof value === 'object' && value !== null) {
+                return this.flattenObject(value, newKey);
+            } else {
+                return [[newKey, value]];
+            }
+        });
+    }
+
     private checkAndSetData(key:string, value:any) {
         const allowedType = this.checkAndGetKeyType(key);
         const dataType = this.getDataType(value);
@@ -153,6 +179,9 @@ class JSONAccessor implements IJSONAccessor {
         }
     }
     private getDataType(value:string):JSONType {
+        if (value === null) return JSONType.null;
+        if (Array.isArray(value)) return JSONType.array;
+    
         switch(typeof value) {
             case 'string':
                 return JSONType.string;
@@ -161,15 +190,7 @@ class JSONAccessor implements IJSONAccessor {
             case 'boolean':
                 return JSONType.boolean;
             case 'object':
-                if (Array.isArray(value)) {
-                    return JSONType.array;
-                }
-                else if (value === null) {
-                    return JSONType.null;
-                }
-                else {
-                    return JSONType.object;
-                }
+                return JSONType.object;
             default:
                 return JSONType.null;
         }
