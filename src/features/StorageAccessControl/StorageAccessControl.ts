@@ -1,9 +1,10 @@
-import { Accesses, AccessType } from '../../features/StorageAccess'
+import { IAccessorManager, IAccessor } from 'features/accessors'
+import { Accesses, AccessType } from 'features/StorageAccess'
+import TreeExplorer from 'features/TreeExplorer';
 
 import { AccessTree, StorageAccessControlEvent } from './types';
-import { IAccessor } from '../accessors';
+
 import { AccessDeniedError, DirectoryAccessError, NotRegisterError, StorageAccessError } from './errors';
-import TreeExplorer from '../../features/TreeExplorer';
 
 class StorageAccessControl {
     #events:StorageAccessControlEvent;
@@ -19,8 +20,28 @@ class StorageAccessControl {
         this.#rawTree = tree;
         this.accessTree = new TreeExplorer(tree, ':', true);
     }
+
+    copy(oldIdentifier:string, newIdentifier:string, accessType:string) {
+        const oldACM = this.#getAccessorManager(oldIdentifier, accessType);
+        const newACM = this.#getAccessorManager(newIdentifier, accessType);
+
+        oldACM.copy(newACM);
+    }
+
+    move(oldIdentifier:string, newIdentifier:string, accessType:string) {
+        const oldACM = this.#getAccessorManager(oldIdentifier, accessType);
+        const newACM = this.#getAccessorManager(newIdentifier, accessType);
+        
+        oldACM.move(newACM);
+    }
     
     access(identifier:string, accessType:string):IAccessor {
+        const acm = this.#getAccessorManager(identifier, accessType);
+        
+        return acm.accessor;
+    }
+
+    #getAccessorManager(identifier:string, accessType:string):IAccessorManager<IAccessor> {
         const walked = this.accessTree.walk(identifier);
         if (!walked) {
             throw new NotRegisterError(`'${identifier}' is not registered.`);
@@ -28,7 +49,6 @@ class StorageAccessControl {
 
         // 접근 권한 확인
         const resolvedAccess = this.validateAndResolveAccess(walked.value, accessType, identifier);
-        
         
         // 실제 접근
         const splited = identifier.split(':');

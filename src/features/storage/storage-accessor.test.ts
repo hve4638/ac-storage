@@ -1,20 +1,26 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { TEST_PATH } from '../test-utils';
+import { TEST_PATH } from 'data/test';
 
-import { type IStorage, MemStorage } from '../features/storage';
-import StorageAccess from '../features/StorageAccess';
+import { type IACStorage, MemACStorage } from 'features/storage';
+import StorageAccess from 'features/StorageAccess';
 import { IAccessor } from 'features/accessors';
 
+/**
+ * 각 Accessor에 대한 테스트
+ * ACStorage로 부터 Accessor를 가져와서 사용하는 테스트
+ * 
+ * Accessor 각각에 대한 자세한 테스트는 accessors 테스트로 따로 진행
+ * */
 describe('Storage Accessor Test', () => {
     const testDirectory = path.join(TEST_PATH, 'storage-accessor');
-    let storage:IStorage;
+    let storage:IACStorage;
     
     beforeAll(() => {
         fs.mkdirSync(testDirectory, { recursive: true });
     });
     beforeEach(() => {
-        storage = new MemStorage();
+        storage = new MemACStorage();
         storage.register({
             '**/*' : StorageAccess.Union(
                 StorageAccess.JSON(),

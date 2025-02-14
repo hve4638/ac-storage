@@ -1,22 +1,22 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { IAccessor, BinaryAccessor, JSONAccessor, TextAccessor } from '../../features/accessors';
-import StorageAccessControl, { AccessTree } from '../../features/StorageAccessControl';
-import StorageAccess, { Accesses, AccessType } from '../../features/StorageAccess';
-import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from '../../features/accessors/types';
+import { IAccessor, IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager } from 'features/accessors';
+import StorageAccessControl, { AccessTree } from 'features/StorageAccessControl';
+import StorageAccess, { Accesses, AccessType } from 'features/StorageAccess';
+import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from 'features/accessors/types';
 
 import { StorageError } from './errors';
-import IStorage from './IStorage';
+import IACStorage from './IACStorage';
 
 type AccessorEvent = {
-    create: (actualPath:string, ...args:any[])=>IAccessor;
+    create: (actualPath:string, ...args:any[])=>IAccessorManager<IAccessor>;
 }
 
-class FSStorage implements IStorage {
+class ACStorage implements IACStorage {
     protected basePath: string;
     protected customAccessEvents: Record<string, AccessorEvent> = {};
-    protected accessors:Map<string, IAccessor> = new Map();
+    protected accessors:Map<string, IAccessorManager<IAccessor>> = new Map();
 
     protected accessControl:StorageAccessControl;
     protected aliases:Map<string, string> = new Map();
@@ -32,35 +32,35 @@ class FSStorage implements IStorage {
                 const targetPath = path.join(this.basePath, identifier.replaceAll(':', '/'));
 
                 let item = this.accessors.get(identifier);
-                if (item != undefined && !item.dropped) {
+                if (item != undefined && !item.isDropped()) {
                     return item;
                 }
 
-                let accessor:IAccessor;
+                let acm:IAccessorManager<IAccessor>;
                 switch(sa.accessType) {
                     case 'json':
-                        accessor = new JSONAccessor(targetPath);
+                        acm = JSONAccessorManager.fromFile(targetPath);
                         break;
                     case 'binary':
-                        accessor = new BinaryAccessor(targetPath);
+                        acm = BinaryAccessorManager.fromFile(targetPath);
                         break;
                     case 'text':
-                        accessor = new TextAccessor(targetPath);
+                        acm = TextAccessorManager.fromFile(targetPath);
                         break;
                     case 'custom':
                         const event = this.customAccessEvents[sa.id];
                         if (!event) {
                             throw new StorageError('Invalid access type');
                         }
-                        accessor = event.create(targetPath, ...sa.args);
+                        acm = event.create(targetPath, ...sa.args);
                         break;
                     default:
                         // 일반적으로 도달해서는 안됨
                         throw new StorageError('Invalid access type');
                         break;
                 }
-                this.accessors.set(identifier, accessor);
-                return accessor;
+                this.accessors.set(identifier, acm);
+                return acm;
             },
             onAccessDir: (identifier) => {
                 const targetPath = identifier.replaceAll(':', '/');
@@ -73,7 +73,7 @@ class FSStorage implements IStorage {
             onRelease: (identifier) => {
                 const accessor = this.accessors.get(identifier);
                 if (accessor) {
-                    if (!accessor.dropped) {
+                    if (!accessor.isDropped()) {
                         accessor.drop();
                     }
                     this.accessors.delete(identifier);
@@ -129,27 +129,27 @@ class FSStorage implements IStorage {
     }
 
     dropAccessor(identifier:string) {
-        const accessor = this.accessors.get(identifier)
-        if (accessor && !accessor.dropped) {
-            accessor.drop();
+        const acm = this.accessors.get(identifier)
+        if (acm && !acm.isDropped()) {
+            acm.drop();
         }
     }
     
     dropAllAccessor() {
-        this.accessors.forEach((accessor) => {
-            if (!accessor.dropped) {
-                accessor.drop();
+        this.accessors.forEach((asm) => {
+            if (!asm.isDropped()) {
+                asm.drop();
             }
         });
     }
 
     commit() {
         for (const accessor of this.accessors.values()) {
-            if (accessor.dropped) continue;
+            if (accessor.isDropped()) continue;
 
             accessor.commit();
         }
     }
 }
 
-export default FSStorage;
+export default ACStorage;

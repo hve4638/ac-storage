@@ -1,11 +1,10 @@
-import { IAccessor, MemTextAccessor, MemBinaryAccessor, MemJSONAccessor } from '../../features/accessors';
-import { Accesses } from '../../features/StorageAccess';
-import StorageAccessControl from '../../features/StorageAccessControl';
+import { BinaryAccessorManager, IAccessor, IAccessorManager, JSONAccessorManager, TextAccessorManager } from 'features/accessors';
+import { Accesses } from 'features/StorageAccess';
+import StorageAccessControl from 'features/StorageAccessControl';
 import { StorageError } from './errors';
-import FSStorage from './FSStorage';
+import ACStorage from './ACStorage';
 
-
-class MemStorage extends FSStorage {
+class MemACStorage extends ACStorage {
     constructor() {
         super('');
     }
@@ -14,26 +13,26 @@ class MemStorage extends FSStorage {
         return new StorageAccessControl({
             onAccess: (identifier:string, sa:Accesses) => {
                 let item = this.accessors.get(identifier);
-                if (item != undefined && !item.dropped) {
+                if (item != undefined && !item.isDropped()) {
                     return item;
                 }
 
-                let accessor:IAccessor;
+                let acm:IAccessorManager<IAccessor>;
                 switch(sa.accessType) {
                     case 'json':
-                        accessor = new MemJSONAccessor();
+                        acm = JSONAccessorManager.fromMemory();
                         break;
                     case 'binary':
-                        accessor = new MemBinaryAccessor();
+                        acm = BinaryAccessorManager.fromMemory();
                         break;
                     case 'text':
-                        accessor = new MemTextAccessor();
+                        acm = TextAccessorManager.fromMemory();
                         break;
                     default:
                         throw new StorageError('MemStorage does not support custom accessor');
                 }
-                this.accessors.set(identifier, accessor);
-                return accessor;
+                this.accessors.set(identifier, acm);
+                return acm;
             },
             onAccessDir: (identifier) => {
                 
@@ -41,7 +40,7 @@ class MemStorage extends FSStorage {
             onRelease: (identifier) => {
                 const accessor = this.accessors.get(identifier);
                 if (accessor) {
-                    if (!accessor.dropped) {
+                    if (!accessor.isDropped()) {
                         accessor.drop();
                     }
                     this.accessors.delete(identifier);
@@ -56,4 +55,4 @@ class MemStorage extends FSStorage {
     }
 }
 
-export default MemStorage;
+export default MemACStorage;

@@ -1,4 +1,4 @@
-import type { IBinaryAccessor } from './types';
+import type { IBinaryAccessor } from '../types';
 
 class MemBinaryAccessor implements IBinaryAccessor {
     #dropped:boolean = false;
@@ -21,7 +21,7 @@ class MemBinaryAccessor implements IBinaryAccessor {
 
     commit() {}
     get dropped() { return this.#dropped; }
-    drop() {}
+    drop() { this.#dropped = true; }
 }
 
 export default MemBinaryAccessor;

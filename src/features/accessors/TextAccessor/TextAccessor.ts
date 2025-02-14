@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
-import type { IAccessor } from './types';
-import { AccessorError } from './errors';
+import type { IAccessor } from '../types';
+import { AccessorError } from '../errors';
 
 class TextAccessor implements IAccessor {
     #filePath:string;
@@ -12,12 +12,10 @@ class TextAccessor implements IAccessor {
     
     write(text:string) {
         this.#ensureNotDropped();
-
         fs.writeFileSync(this.#filePath, text);
     }
     append(text:string) {
         this.#ensureNotDropped();
-
         fs.appendFileSync(this.#filePath, text);
     }
     read():string {
@@ -32,11 +30,9 @@ class TextAccessor implements IAccessor {
     }
     drop() {
         if (this.dropped) return;
-        this.#dropped = true;
         
-        if (fs.existsSync(this.#filePath)) {
-            fs.rmSync(this.#filePath, { force: true });
-        }
+        fs.rmSync(this.#filePath, { force: true });
+        this.#dropped = true;
     }
     commit() {
         this.#ensureNotDropped();

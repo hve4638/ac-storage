@@ -1,20 +1,20 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { TEST_PATH } from '../test-utils';
+import { TEST_PATH } from 'data/test';
 
-import { FSStorage, type IStorage, MemStorage } from '../features/storage';
-import StorageAccess from '../features/StorageAccess';
-import { IAccessor } from 'features/accessors';
+import { ACStorage, type IACStorage } from 'features/storage';
+import StorageAccess from 'features/StorageAccess';
+import { IAccessor, IAccessorManager } from 'features/accessors';
 
 describe('Storage Accessor Test', () => {
     const testDirectory = path.join(TEST_PATH, 'custom-accessor');
-    let storage:IStorage;
+    let storage:IACStorage;
     
     beforeAll(() => {
         fs.mkdirSync(testDirectory, { recursive: true });
     });
     beforeEach(() => {
-        storage = new FSStorage(testDirectory);
+        storage = new ACStorage(testDirectory);
         storage.register({
             'item.array' : StorageAccess.Custom('array'),
             'a.value' : StorageAccess.Custom('value', 0),
@@ -22,24 +22,44 @@ describe('Storage Accessor Test', () => {
         });
         storage.addAccessEvent('array', {
             create(acutalPath) {
-                return {
+                const ac = {
                     acutalPath,
                     array : [],
                     commit() {},
                     drop() {},
                     get dropped() { return false; },
                 };
+                return {
+                    accessor : ac,
+                    copy() { return {} as any; },
+                    move() { return {} as any; },
+                    dependBy: [],
+                    dependOn: [],
+                    commit() {},
+                    drop() {},
+                    isDropped() { return false; },
+                } as IAccessorManager<any>;
             }
         });
         storage.addAccessEvent('value', {
             create(acutalPath, initValue) {
-                return {
+                const ac = {
                     acutalPath,
                     value : initValue,
                     commit() {},
                     drop() {},
                     get dropped() { return false; },
                 };
+                return {
+                    accessor : ac,
+                    copy() { return {} as any; },
+                    move() { return {} as any; },
+                    dependBy: [],
+                    dependOn: [],
+                    commit() {},
+                    drop() {},
+                    isDropped() { return false; },
+                } as IAccessorManager<any>;
             }
         });
     });

@@ -1,3 +1,16 @@
+export interface IAccessorManager<AC extends IAccessor> {
+    accessor:AC;
+
+    move(newACM:IAccessorManager<AC>):void;
+    copy(newACM:IAccessorManager<AC>):void;
+    dependOn : IAccessorManager<AC>[];
+    dependBy : WeakRef<IAccessorManager<AC>>[];
+
+    drop():void;
+    commit():void;
+    isDropped():boolean;
+}
+
 export interface IAccessor {
     commit():void;
     drop():void;

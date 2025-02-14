@@ -1,3 +1,1 @@
-import JSONAccessor from './JSONAccessor';
-
-export default JSONAccessor;
+export { default as JSONAccessorManager } from './JSONAccessorManager';

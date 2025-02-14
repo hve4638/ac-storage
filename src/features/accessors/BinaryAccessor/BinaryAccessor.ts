@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
-import type { IAccessor } from './types';
-import { AccessorError } from './errors';
+import type { IAccessor } from '../types';
+import { AccessorError } from '../errors';
 
 class BinaryAccessor implements IAccessor {
     #filePath:string;

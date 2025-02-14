@@ -1,14 +1,14 @@
-import type { IAccessor } from '../../features/accessors';
-import type { AccessTree } from '../../features/StorageAccessControl';
-import type { IBinaryAccessor, IJSONAccessor, ITextAccessor } from '../../features/accessors/types';
-import type { AccessType } from '../../features/StorageAccess';
+import type { IAccessor, IAccessorManager, } from 'features/accessors';
+import type { AccessTree } from 'features/StorageAccessControl';
+import type { IBinaryAccessor, IJSONAccessor, ITextAccessor } from 'features/accessors';
+import type { AccessType } from 'features/StorageAccess';
 
 type AccessorEvent = {
-    create: (actualPath:string, ...args:any[])=>IAccessor;
+    create: (actualPath:string, ...args:any[])=>IAccessorManager<IAccessor>;
 }
 
 
-interface IStorage {
+interface IACStorage {
     register(tree:AccessTree):void;
     addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent):void;
     
@@ -23,4 +23,4 @@ interface IStorage {
     commit():void;
 }
 
-export default IStorage;
+export default IACStorage;

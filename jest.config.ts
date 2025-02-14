@@ -10,5 +10,6 @@ module.exports = {
     moduleNameMapper: {
         '^types/(.*)$': '<rootDir>/src/types/$1',
         '^features/(.*)$': '<rootDir>/src/features/$1',
+        '^data/(.*)$': '<rootDir>/src/data/$1',
     },
 };

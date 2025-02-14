@@ -3,7 +3,7 @@ export type {
     IBinaryAccessor,
     IJSONAccessor,
     ITextAccessor
-} from './features/accessors';
+} from 'features/accessors';
 export {
     default as StorageAccessControl,
     type AccessTree,
@@ -12,19 +12,20 @@ export {
     DirectoryAccessError,
     NotRegisterError,
     StorageAccessError,
-} from './features/StorageAccessControl';
+} from 'features/StorageAccessControl';
 export {
-    type IStorage,
-    FSStorage,
-    MemStorage,
+    type IACStorage,
+    ACStorage,
+    MemACStorage,
     StorageError
-} from './features/storage';
+} from 'features/storage';
 export {
     default as StorageAccess,
     type Accesses,
     type AccessType
-} from './features/StorageAccess';
+} from 'features/StorageAccess';
 export {
     type JSONTree,
     JSONType
-} from './types/json'
+} from 'types/json'
+

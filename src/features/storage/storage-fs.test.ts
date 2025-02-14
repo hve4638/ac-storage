@@ -1,9 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { TEST_PATH } from '../test-utils';
+import { TEST_PATH } from 'data/test';
 
-import { FSStorage } from '../features/storage';
-import StorageAccess from '../features/StorageAccess';
+import { ACStorage } from 'features/storage';
+import StorageAccess from 'features/StorageAccess';
 
 function isFile(filename:string) {
     if (!fs.existsSync(filename)) {
@@ -28,24 +28,29 @@ function readAsJSON(filename:string) {
     return JSON.parse(read(filename));
 }
 
-describe('FSStorage FS Test', () => {
+// ACStorage가 파일시스템과 연동되는지 테스트
+describe('ACStorage FS Test', () => {
     const testDirectory = path.join(TEST_PATH, 'storage-fs');
-    let storage:FSStorage;
+    let storage:ACStorage;
+
+    function getPath(...args:string[]) {
+        return path.join(testDirectory, ...args);
+    }
     
     beforeAll(() => {
     });
     beforeEach(() => {
         fs.mkdirSync(testDirectory, { recursive: true });
-        storage = new FSStorage(testDirectory);
+        storage = new ACStorage(testDirectory);
     });
     afterEach(() => {
         fs.rmSync(testDirectory, { recursive: true });
         storage.dropAllAccessor();
     });
     
-    test('파일 FSStorage FS 연동', () => {
-        const configPath = path.join(testDirectory, 'config.json');
-        const dataPath = path.join(testDirectory, 'data.txt');
+    test('파일 ACStorage FS 연동', () => {
+        const configPath = getPath('config.json');
+        const dataPath = getPath('data.txt');
         const verifyState = (expected: { config: boolean, data: boolean }, comment:any='') => {
             const actual = {
                 __comment: comment,
@@ -87,10 +92,10 @@ describe('FSStorage FS Test', () => {
         verifyState({ config: false, data: false }, 7);
     });
 
-    test('디렉토리 FSStorage FS 연동', () => {
-        const baseDirPath = path.join(testDirectory, 'base');
-        const dataPath = path.join(testDirectory, 'base', 'data.txt');
-        const configPath = path.join(testDirectory, 'base', 'config.json');
+    test('디렉토리 ACStorage FS 연동', () => {
+        const baseDirPath = getPath('base');
+        const dataPath = getPath('base', 'data.txt');
+        const configPath = getPath('base', 'config.json');
         const verifyState = (expected: { base: boolean, data: boolean, config: boolean }, comment:any='') => {
             const actual = {
                 __comment: comment,
@@ -133,9 +138,9 @@ describe('FSStorage FS Test', () => {
         verifyState({ base : true, config: false, data: true }, 4);
     });
 
-    test('파일 이동', ()=>{
-        const prevPath = path.join(testDirectory, 'prev.json');
-        const nextPath = path.join(testDirectory, 'next.json');
+    test('파일 수동 이동', ()=>{
+        const prevPath = getPath('prev.json');
+        const nextPath = getPath('next.json');
         const data = {
             a : 1,
             b : 2,

@@ -1,5 +1,5 @@
 
-import type { ITextAccessor } from './types';
+import type { ITextAccessor } from '../types';
 
 class MemTextAccessor implements ITextAccessor {
     #dropped:boolean = false;
@@ -17,7 +17,7 @@ class MemTextAccessor implements ITextAccessor {
 
     commit() {}
     get dropped() { return this.#dropped; }
-    drop() {}
+    drop() { this.#dropped = true; }
 }
 
 export default MemTextAccessor;

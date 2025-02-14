@@ -1,6 +1,6 @@
-import StorageAccess from '../features/StorageAccess';
-import StorageAccessControl, { StorageAccessError } from '../features/StorageAccessControl';
-import { AccessDeniedError, DirectoryAccessError, NotRegisterError } from '../features/StorageAccessControl/errors';
+import StorageAccess from 'features/StorageAccess';
+import StorageAccessControl from 'features/StorageAccessControl';
+import { AccessDeniedError, DirectoryAccessError, NotRegisterError } from './errors';
 
 describe('StorageAccessControl Test', () => {
     test('access', () => {
