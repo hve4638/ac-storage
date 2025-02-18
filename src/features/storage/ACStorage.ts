@@ -78,7 +78,7 @@ class ACStorage implements IACStorage {
                         acm = CustomAccessorManager.from(ac, sa.id, event);
                         break;
                     default:
-                        // 일반적으로 도달해서는 안됨
+                        // 기본 타입 이외에는 custom 타입으로 wrap되기 때문에 이 경우가 발생하지 않음
                         throw new StorageError('Invalid access type');
                         break;
                 }
