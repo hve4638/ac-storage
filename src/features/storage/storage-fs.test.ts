@@ -4,6 +4,7 @@ import { TEST_PATH } from 'data/test';
 
 import { ACStorage } from 'features/storage';
 import StorageAccess from 'features/StorageAccess';
+import { JSONType } from 'types/json';
 
 function isFile(filename:string) {
     if (!fs.existsSync(filename)) {
@@ -174,5 +175,71 @@ describe('ACStorage FS Test', () => {
         expect(isFile(nextPath)).toBeTruthy();
 
         expect(next.getAll()).toEqual(data);
-    })
+    });
+    
+    test('파일 이동', ()=>{
+        const prevPath = getPath('prev.json');
+        const nextPath = getPath('next.json');
+        
+        // 0. 초기 상태
+        expect(isFile(prevPath)).toBeFalsy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 1. 저장소 등록
+        storage.register({
+            '*' : StorageAccess.JSON({ value : JSONType.number }),
+        });
+        
+        // 2. 저장소 생성
+        let prev = storage.getJSONAccessor('prev.json');
+        prev.setOne('value', 1);
+        storage.commit();
+
+        expect(isFile(prevPath)).toBeTruthy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 3. 새 저장소 생성 및 이동
+        storage.moveAccessor('prev.json', 'next.json');
+        storage.commit();
+
+        expect(isFile(prevPath)).toBeFalsy();
+        expect(isFile(nextPath)).toBeTruthy();
+
+        // 4. 내용 확인
+        const nextAC = storage.getJSONAccessor('next.json');
+        expect(nextAC.getAll()).toEqual({ value : 1 });
+    });
+    
+    test('파일 복사', ()=>{
+        const prevPath = getPath('prev.json');
+        const nextPath = getPath('next.json');
+        
+        // 0. 초기 상태
+        expect(isFile(prevPath)).toBeFalsy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 1. 저장소 등록
+        storage.register({
+            '*' : StorageAccess.JSON({ value : JSONType.number }),
+        });
+        
+        // 2. 저장소 생성
+        let prev = storage.getJSONAccessor('prev.json');
+        prev.setOne('value', 1);
+        storage.commit();
+
+        expect(isFile(prevPath)).toBeTruthy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 3. 새 저장소 생성 및 이동
+        storage.copyAccessor('prev.json', 'next.json');
+        storage.commit();
+
+        expect(isFile(prevPath)).toBeTruthy();
+        expect(isFile(nextPath)).toBeTruthy();
+
+        // 4. 내용 확인
+        const nextAC = storage.getJSONAccessor('next.json');
+        expect(nextAC.getAll()).toEqual({ value : 1 });
+    });
 });

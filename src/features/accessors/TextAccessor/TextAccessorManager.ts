@@ -1,6 +1,6 @@
 import TextAccessor from './TextAccessor';
 import MemTextAccessor from './MemTextAccessor';
-import { IAccessorManager, ITextAccessor } from '../types';
+import { IAccessor, IAccessorManager, ITextAccessor } from '../types';
 
 class TextAccessorManager implements IAccessorManager<ITextAccessor> {
     accessor : ITextAccessor;
@@ -30,6 +30,10 @@ class TextAccessorManager implements IAccessorManager<ITextAccessor> {
             throw new Error(`This accessor is already dropped.`);
         }
         acm.accessor.write(this.accessor.read());
+    }
+
+    isCompatible(other:IAccessorManager<IAccessor>):other is TextAccessorManager {
+        return other instanceof TextAccessorManager;
     }
     
     drop() {

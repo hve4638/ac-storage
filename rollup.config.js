@@ -44,6 +44,7 @@ export default [
                     "paths": {
                       "types": ["src/types/index"],
                       "types/*": ["src/types/*"],
+                      "errors": ["src/errors/index"],
                       "features/*": ["src/features/*"],
                       "data/*": ["src/data/*"]
                     }

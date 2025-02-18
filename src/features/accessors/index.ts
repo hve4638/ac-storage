@@ -8,3 +8,4 @@ export type {
 export { JSONAccessorManager } from './JSONAccessor';
 export { BinaryAccessorManager } from './BinaryAccessor';
 export { TextAccessorManager } from './TextAccessor';
+export { CustomAccessorManager } from './CustomAccessor';

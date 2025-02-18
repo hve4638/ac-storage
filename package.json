@@ -1,6 +1,6 @@
 {
-  "name": "@hve/fs-storage",
-  "version": "0.5.2",
+  "name": "ac-storage",
+  "version": "0.1.0",
   "main": "./dist/bundle.cjs",
   "module": "./dist/bundle.mjs",
   "types": "./dist/index.d.ts",

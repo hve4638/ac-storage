@@ -1,7 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { AccessorEvent } from 'types';
 
-import { IAccessor, IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager } from 'features/accessors';
+import { IAccessor, IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager, CustomAccessorManager } from 'features/accessors';
 import StorageAccessControl, { AccessTree } from 'features/StorageAccessControl';
 import StorageAccess, { Accesses, AccessType } from 'features/StorageAccess';
 import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from 'features/accessors/types';
@@ -9,21 +10,42 @@ import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from 'features/accessor
 import { StorageError } from './errors';
 import IACStorage from './IACStorage';
 
-type AccessorEvent = {
-    create: (actualPath:string, ...args:any[])=>IAccessorManager<IAccessor>;
-}
-
 class ACStorage implements IACStorage {
+    protected cachePath:string;
+    protected noCache:boolean;
+
     protected basePath: string;
-    protected customAccessEvents: Record<string, AccessorEvent> = {};
+    protected customAccessEvents: Record<string, AccessorEvent<IAccessor>> = {};
     protected accessors:Map<string, IAccessorManager<IAccessor>> = new Map();
 
     protected accessControl:StorageAccessControl;
-    protected aliases:Map<string, string> = new Map();
 
-    constructor(basePath:string) {
+    protected accessCache:Record<string, string> = {};
+
+    constructor(basePath:string, noCache:boolean=false) {
         this.basePath = basePath;
         this.accessControl = this.initAccessControl();
+        this.cachePath = path.join(this.basePath, '.acstorage');
+        this.noCache = noCache;
+
+        if (!this.noCache) this.loadCache();
+    }
+
+    protected loadCache() {
+        try {
+            const cacheData = fs.readFileSync(this.cachePath, 'utf8');
+
+            this.accessCache = JSON.parse(cacheData);
+        }
+        catch {
+            ;
+        }
+    }
+
+    protected saveCache() {
+        const cacheData = JSON.stringify(this.accessCache, null, 4);
+
+        fs.writeFileSync(this.cachePath, cacheData, 'utf8');
     }
 
     protected initAccessControl():StorageAccessControl {
@@ -52,13 +74,15 @@ class ACStorage implements IACStorage {
                         if (!event) {
                             throw new StorageError('Invalid access type');
                         }
-                        acm = event.create(targetPath, ...sa.args);
+                        const ac = event.create(targetPath, ...sa.args);
+                        acm = CustomAccessorManager.from(ac, sa.id, event);
                         break;
                     default:
                         // 일반적으로 도달해서는 안됨
                         throw new StorageError('Invalid access type');
                         break;
                 }
+                this.accessCache[identifier] = sa.accessType !== 'custom' ? sa.accessType : sa.id;
                 this.accessors.set(identifier, acm);
                 return acm;
             },
@@ -76,6 +100,7 @@ class ACStorage implements IACStorage {
                     if (!accessor.isDropped()) {
                         accessor.drop();
                     }
+                    delete this.accessCache[identifier];
                     this.accessors.delete(identifier);
                 }
             },
@@ -98,7 +123,7 @@ class ACStorage implements IACStorage {
         this.accessControl.register(tree);
     }
 
-    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent) {
+    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<IAccessor>) {
         this.customAccessEvents[customId] = event;
     }
 
@@ -112,10 +137,56 @@ class ACStorage implements IACStorage {
         return this.getAccessor(identifier, 'binary') as IBinaryAccessor;
     }
     getAccessor(identifier:string, accessType:string):IAccessor {
-        if (this.aliases.has(identifier)) {
-            identifier = this.aliases.get(identifier)!;
-        }
         return this.accessControl.access(identifier, accessType) as IAccessor;
+    }
+
+    copyAccessor(oldIdentifier:string, newIdentifier:string) {
+        const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
+
+        this.accessControl.copy(oldIdentifier, newIdentifier, accessType);
+    }
+
+    moveAccessor(oldIdentifier:string, newIdentifier:string) {
+        const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
+        
+        this.accessControl.move(oldIdentifier, newIdentifier, accessType);
+    }
+    
+    protected validateAndGetAccessTypePair(oldIdentifier:string, newIdentifier:string) {
+        /*
+            accessControl에서 작업 수행 전, cache를 통한 검증을 진행
+
+            1. oldIdentifier에 대한 accessType이 캐시에 존재하는 경우
+                - noCahce 설정이 false 라면 예외 발생
+                - noCache 설정이 true 라면 accessControl에서 직접 확인
+                    - accessType이 1개가 아니라면 예외 발생
+            2. oldIdentifier, newIdentifier의 accessType을 비교
+                - newIdentifier의 accessType이 존재하지 않다면 진행
+                    - 실제로 accessor가 적절한지는 AccessControl에서 검증
+            3. accessControl에게 copy 요청
+                - oldIdentifier의 accessor를 newIdentifier로 복사
+        */
+        const oldAT:string = this.accessCache[oldIdentifier];
+        const newAT = this.accessCache[newIdentifier];
+
+        if (oldAT == null) {
+            if (this.noCache) {
+                const atCandidates = this.accessControl.getAccessType(oldIdentifier);
+
+                if (atCandidates.length !== 1) {
+                    throw new StorageError(`Cannot infer the access type of ${oldIdentifier}`);
+                }
+                return atCandidates[0];
+            }
+            else {
+                throw new StorageError(`The accessor for '${oldIdentifier}' is not initialized.`);
+            }
+        }
+        else if (newAT != null && oldAT !== newAT) {
+            throw new StorageError(`The accessors '${oldIdentifier}'(${oldAT}) and '${newIdentifier}'(${newAT}) are not compatible.`);            
+        }
+
+        return oldAT;
     }
 
     dropDir(identifier:string) {
@@ -149,6 +220,8 @@ class ACStorage implements IACStorage {
 
             accessor.commit();
         }
+        
+        if (!this.noCache) this.saveCache();
     }
 }
 

@@ -4,7 +4,6 @@ import { TEST_PATH } from 'data/test';
 
 import { ACStorage, type IACStorage } from 'features/storage';
 import StorageAccess from 'features/StorageAccess';
-import { IAccessor, IAccessorManager } from 'features/accessors';
 
 describe('Storage Accessor Test', () => {
     const testDirectory = path.join(TEST_PATH, 'custom-accessor');
@@ -22,44 +21,24 @@ describe('Storage Accessor Test', () => {
         });
         storage.addAccessEvent('array', {
             create(acutalPath) {
-                const ac = {
+                return {
                     acutalPath,
                     array : [],
                     commit() {},
                     drop() {},
                     get dropped() { return false; },
                 };
-                return {
-                    accessor : ac,
-                    copy() { return {} as any; },
-                    move() { return {} as any; },
-                    dependBy: [],
-                    dependOn: [],
-                    commit() {},
-                    drop() {},
-                    isDropped() { return false; },
-                } as IAccessorManager<any>;
             }
         });
         storage.addAccessEvent('value', {
             create(acutalPath, initValue) {
-                const ac = {
+                return {
                     acutalPath,
                     value : initValue,
                     commit() {},
                     drop() {},
                     get dropped() { return false; },
                 };
-                return {
-                    accessor : ac,
-                    copy() { return {} as any; },
-                    move() { return {} as any; },
-                    dependBy: [],
-                    dependOn: [],
-                    commit() {},
-                    drop() {},
-                    isDropped() { return false; },
-                } as IAccessorManager<any>;
             }
         });
     });

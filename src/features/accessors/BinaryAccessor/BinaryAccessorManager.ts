@@ -1,11 +1,11 @@
 import BinaryAccessor from './BinaryAccessor';
-import { IAccessorManager, IBinaryAccessor } from '../types';
+import { IAccessor, IAccessorManager, IBinaryAccessor } from '../types';
 import MemBinaryAccessor from './MemBinaryAccessor';
 
 class BinaryAccessorManager implements IAccessorManager<IBinaryAccessor> {
     accessor : IBinaryAccessor;
-    dependOn : IAccessorManager<BinaryAccessor>[] = [];
-    dependBy : WeakRef<IAccessorManager<BinaryAccessor>>[] = [];
+    dependOn = {};
+    dependBy = {};
     
     static fromFile(actualPath:string) {
         return new BinaryAccessorManager(new BinaryAccessor(actualPath));
@@ -31,6 +31,10 @@ class BinaryAccessorManager implements IAccessorManager<IBinaryAccessor> {
         }
 
         ac.accessor.write(this.accessor.read());
+    }
+
+    isCompatible(other:IAccessorManager<IAccessor>):other is BinaryAccessorManager {
+        return other instanceof BinaryAccessorManager;
     }
     
     drop() {

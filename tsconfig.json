@@ -29,9 +29,10 @@
         "baseUrl": "./",
         "paths": {
           "types": ["src/types/index"],
+          "errors": ["src/errors/index"],
           "types/*": ["src/types/*"],
           "features/*": ["src/features/*"],
-          "data/*": ["src/data/*"]
+          "data/*": ["src/data/*"],
         }
     },
     "include": [

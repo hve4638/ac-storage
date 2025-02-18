@@ -8,7 +8,7 @@ class StorageAccess {
     static JSON(structure:JSONTree|null=null):Accesses {
         return { accessType : 'json', structure };
     };
-    static Custom(id:string, ...args:unknown[]):Accesses {
+    static Custom(id:string, ...args:any[]):Accesses {
         return { accessType : 'custom', args, id };
 
     }

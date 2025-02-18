@@ -83,6 +83,29 @@ class StorageAccessControl {
         this.#events.onReleaseDir(identifier);
     }
 
+    getAccessType(identifier:string):string[] {
+        const getAT = (access:Accesses):string => {
+            return (
+                access.accessType === 'custom'
+                ? access.id
+                : access.accessType
+            )
+        }
+        const access:Accesses = this.accessTree.get(identifier);
+
+        if (this.checkAccessIsDirectory(access)) {
+            return [];
+        }
+        else {
+            if (access.accessType === 'union') {
+                return access.accesses.map((ac)=>getAT(ac));
+            }
+            else {
+                return [getAT(access)];
+            }
+        }
+    }
+
     validateDirectoryPath(identifier:string) {
         const walked = this.accessTree.walk(identifier);
         if (!walked || !this.checkAccessIsDirectory(walked.value)) {

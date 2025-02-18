@@ -1,10 +1,14 @@
+import { JSONTree } from "types/json";
+
 export interface IAccessorManager<AC extends IAccessor> {
     accessor:AC;
+    dependOn : Record<string, IAccessorManager<IAccessor>>;
+    dependBy : Record<string, WeakRef<IAccessorManager<IAccessor>>>;
 
     move(newACM:IAccessorManager<AC>):void;
     copy(newACM:IAccessorManager<AC>):void;
-    dependOn : IAccessorManager<AC>[];
-    dependBy : WeakRef<IAccessorManager<AC>>[];
+
+    isCompatible(other:IAccessorManager<IAccessor>):boolean;
 
     drop():void;
     commit():void;
@@ -18,6 +22,8 @@ export interface IAccessor {
 }
 
 export interface IJSONAccessor extends IAccessor {
+    get jsonStructure():JSONTree|null;
+
     set(items:Record<string, any>):string[];
     setOne(key:string, value:any):void;
     get(keys:string[]):any;
