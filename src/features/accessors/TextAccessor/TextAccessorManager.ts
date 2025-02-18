@@ -4,8 +4,8 @@ import { IAccessor, IAccessorManager, ITextAccessor } from '../types';
 
 class TextAccessorManager implements IAccessorManager<ITextAccessor> {
     accessor : ITextAccessor;
-    dependOn : IAccessorManager<ITextAccessor>[] = [];
-    dependBy : WeakRef<IAccessorManager<ITextAccessor>>[] = [];
+    dependOn = {};
+    dependBy = {};
     
     static fromFile(actualPath:string) {
         return new TextAccessorManager(new TextAccessor(actualPath));
