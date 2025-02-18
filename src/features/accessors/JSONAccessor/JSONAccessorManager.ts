@@ -5,10 +5,10 @@ import { JSONTree } from 'types/json';
 
 class JSONAccessorManager implements IAccessorManager<IJSONAccessor> {
     accessor : IJSONAccessor;
-    dependOn = {};
-    dependBy = {};
+    dependent = new Set<string>();
+    dependency = new Set<string>();
     
-    static fromFile(actualPath:string, tree?:JSONTree) {
+    static fromFS(actualPath:string, tree?:JSONTree) {
         return new JSONAccessorManager(new JSONAccessor(actualPath, tree));
     }
 
@@ -20,6 +20,15 @@ class JSONAccessorManager implements IAccessorManager<IJSONAccessor> {
         this.accessor = accessor;
     }
 
+    create() {
+        
+    }
+    load() {
+        this.accessor.loadData();
+    }
+    exists() {
+        return this.accessor.hasExistingData();
+    }
     move(acm:IAccessorManager<IJSONAccessor>) {
         const newAC = this.copy(acm);
         this.drop();

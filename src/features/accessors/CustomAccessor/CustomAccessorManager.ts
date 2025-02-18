@@ -1,16 +1,17 @@
 import { AccessorEvent } from 'types';
 import { IAccessor, IAccessorManager } from '../types';
 import { AccessorManagerError } from 'errors';
+import { ICustomAccessor } from './types';
 
-class CustomAccessorManager<AC extends IAccessor> implements IAccessorManager<AC> {
+class CustomAccessorManager<AC extends ICustomAccessor> implements IAccessorManager<AC> {
     #customId:string;
     accessor : AC;
-    dependOn = {};
-    dependBy = {};
+    dependent = new Set<string>();
+    dependency = new Set<string>();
 
-    #event:AccessorEvent<AC>;
+    #event:Omit<AccessorEvent<AC>, 'create'>;
     
-    static from<AC extends IAccessor>(ac:AC, customId, event:AccessorEvent<AC>) {
+    static from<AC extends ICustomAccessor>(ac:AC, customId:string, event:AccessorEvent<AC>) {
         return new CustomAccessorManager<AC>(ac, customId, event);
     }
 
@@ -18,6 +19,21 @@ class CustomAccessorManager<AC extends IAccessor> implements IAccessorManager<AC
         this.accessor = ac;
         this.#customId = customId;
         this.#event = event;
+    }
+
+    create() {
+        if (this.accessor.createData) this.accessor.createData();
+    }
+    load() {
+        if (this.accessor.loadData) this.accessor.loadData();
+    }
+    exists() {
+        if (this.accessor.hasExistingData) {
+            return this.accessor.hasExistingData();
+        }
+        else {
+            return false;
+        }
     }
 
     move(ac:IAccessorManager<AC>) {
@@ -64,7 +80,7 @@ class CustomAccessorManager<AC extends IAccessor> implements IAccessorManager<AC
         this.accessor.commit();
     }
     isDropped() {
-        return this.accessor.dropped;
+        return this.accessor.isDropped();
     }
 }
 

@@ -15,6 +15,9 @@ class MemJSONAccessor extends JSONAccessor {
     override removeFile() {
         // nothing to do
     }
+    override existsFile() {
+        return false;
+    }
 }
 
 export default MemJSONAccessor;

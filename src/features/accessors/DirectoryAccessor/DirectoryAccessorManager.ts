@@ -1,11 +1,12 @@
 import { IAccessor, IAccessorManager, IBinaryAccessor } from '../types';
 import DirectoryAccessor from './DirectoryAccessor';
 import MemDirectoryAccessor from './MemDirectoryAccessor';
+import { IDirectoryAccessor } from './types';
 
-class DirectoryAccessorManager implements IAccessorManager<IAccessor> {
-    accessor : IAccessor;
-    dependOn = {};
-    dependBy = {};
+class DirectoryAccessorManager implements IAccessorManager<IDirectoryAccessor> {
+    accessor : IDirectoryAccessor;
+    dependent = new Set<string>();
+    dependency = new Set<string>();
     tree : any = {};
     
     static fromFS(actualPath:string, tree:any) {
@@ -16,11 +17,20 @@ class DirectoryAccessorManager implements IAccessorManager<IAccessor> {
         return new DirectoryAccessorManager(new MemDirectoryAccessor(), tree);
     }
 
-    private constructor(ac:IAccessor, tree:any={}) {
+    private constructor(ac:IDirectoryAccessor, tree:any={}) {
         this.accessor = ac;
         this.tree = tree;
     }
 
+    create() {
+        this.accessor.create();
+    }
+    load() {
+        
+    }
+    exists(): boolean {
+        return this.accessor.exists();
+    }
     move(ac:IAccessorManager<DirectoryAccessor>) {
         const newAC = this.copy(ac);
         this.drop();
@@ -39,10 +49,10 @@ class DirectoryAccessorManager implements IAccessorManager<IAccessor> {
         this.accessor.drop();
     }
     commit() {
-        this.accessor.commit();
+        
     }
     isDropped() {
-        return this.accessor.dropped;
+        return this.accessor.exists();
     }
 }
 

@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
-import type { IAccessor } from '../types';
+import type { IAccessor, ITextAccessor } from '../types';
 import { AccessorError } from '../errors';
 
-class TextAccessor implements IAccessor {
+class TextAccessor implements ITextAccessor {
     #filePath:string;
     #dropped:boolean = false;
 
@@ -10,6 +10,9 @@ class TextAccessor implements IAccessor {
         this.#filePath = filePath;
     }
     
+    hasExistingData() {
+        return fs.existsSync(this.#filePath);
+    }
     write(text:string) {
         this.#ensureNotDropped();
         fs.writeFileSync(this.#filePath, text);

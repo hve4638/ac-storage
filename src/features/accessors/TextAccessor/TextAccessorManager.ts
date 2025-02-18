@@ -4,10 +4,10 @@ import { IAccessor, IAccessorManager, ITextAccessor } from '../types';
 
 class TextAccessorManager implements IAccessorManager<ITextAccessor> {
     accessor : ITextAccessor;
-    dependOn = {};
-    dependBy = {};
+    dependent = new Set<string>();
+    dependency = new Set<string>();
     
-    static fromFile(actualPath:string) {
+    static fromFS(actualPath:string) {
         return new TextAccessorManager(new TextAccessor(actualPath));
     }
 
@@ -17,6 +17,16 @@ class TextAccessorManager implements IAccessorManager<ITextAccessor> {
 
     private constructor(accessor:ITextAccessor) {
         this.accessor = accessor;
+    }
+
+    create() {
+        // nothing to do
+    }
+    load() {
+
+    }
+    exists() {
+        return this.accessor.hasExistingData();
     }
 
     move(acm:IAccessorManager<ITextAccessor>) {

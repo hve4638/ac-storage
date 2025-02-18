@@ -2,20 +2,21 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { AccessorEvent } from 'types';
 
-import { IAccessor, IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager, CustomAccessorManager } from 'features/accessors';
+import { IAccessor, IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager, CustomAccessorManager, ICustomAccessor } from 'features/accessors';
 import StorageAccessControl, { AccessTree } from 'features/StorageAccessControl';
 import StorageAccess, { Accesses, AccessType } from 'features/StorageAccess';
 import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from 'features/accessors/types';
 
 import { StorageError } from './errors';
 import IACStorage from './IACStorage';
+import DirectoryAccessorManager from 'features/accessors/DirectoryAccessor/DirectoryAccessorManager';
 
 class ACStorage implements IACStorage {
     protected cachePath:string;
     protected noCache:boolean;
 
     protected basePath: string;
-    protected customAccessEvents: Record<string, AccessorEvent<IAccessor>> = {};
+    protected customAccessEvents: Record<string, AccessorEvent<ICustomAccessor>> = {};
     protected accessors:Map<string, IAccessorManager<IAccessor>> = new Map();
 
     protected accessControl:StorageAccessControl;
@@ -49,6 +50,20 @@ class ACStorage implements IACStorage {
     }
 
     protected initAccessControl():StorageAccessControl {
+        const releaseAccessor = (identifier:string) => {
+            const accessor = this.accessors.get(identifier);
+            if (!accessor) return;
+
+            for (const child of accessor.dependent) {
+                releaseAccessor(child);
+            }
+
+            if (!accessor.isDropped()) accessor.drop();
+
+            delete this.accessCache[identifier];
+            this.accessors.delete(identifier);
+        }
+
         return new StorageAccessControl({
             onAccess: (identifier:string, sa:Accesses) => {
                 const targetPath = path.join(this.basePath, identifier.replaceAll(':', '/'));
@@ -61,13 +76,13 @@ class ACStorage implements IACStorage {
                 let acm:IAccessorManager<IAccessor>;
                 switch(sa.accessType) {
                     case 'json':
-                        acm = JSONAccessorManager.fromFile(targetPath);
+                        acm = JSONAccessorManager.fromFS(targetPath);
                         break;
                     case 'binary':
-                        acm = BinaryAccessorManager.fromFile(targetPath);
+                        acm = BinaryAccessorManager.fromFS(targetPath);
                         break;
                     case 'text':
-                        acm = TextAccessorManager.fromFile(targetPath);
+                        acm = TextAccessorManager.fromFS(targetPath);
                         break;
                     case 'custom':
                         const event = this.customAccessEvents[sa.id];
@@ -86,10 +101,11 @@ class ACStorage implements IACStorage {
                 this.accessors.set(identifier, acm);
                 return acm;
             },
-            onAccessDir: (identifier) => {
+            onAccessDir: (identifier, tree) => {
                 const targetPath = identifier.replaceAll(':', '/');
-
                 const dirPath = path.join(this.basePath, targetPath);
+
+                const acm = DirectoryAccessorManager.fromFS(dirPath, tree);
                 if (!fs.existsSync(dirPath)) {
                     fs.mkdirSync(dirPath, { recursive: true });
                 }
@@ -105,17 +121,22 @@ class ACStorage implements IACStorage {
                 }
             },
             onReleaseDir: (identifier) => {
-                const targetPath = identifier.replaceAll(':', '/');
-
-                const dirPath = path.join(this.basePath, targetPath);
-                if (fs.existsSync(dirPath)) {
-                    fs.rmSync(dirPath, { recursive: true });
+                const accessor = this.accessors.get(identifier);
+                if (accessor) {
+                    if (!accessor.isDropped()) {
+                        accessor.drop();
+                    }
+                    delete this.accessCache[identifier];
+                    this.accessors.delete(identifier);
                 }
-
-                const childPrefix = `${identifier}:`;
-                const childIds = Array.from(this.accessors.keys()).filter((key)=>key.startsWith(childPrefix));
-                childIds.forEach((id) => this.accessors.delete(id));
             },
+            onChainDependency: (dependentId, dependencyId) => {
+                const dependent = this.accessors.get(dependentId);
+
+                if (dependent) {
+                    dependent.dependent.add(dependencyId);
+                }
+            }
         });
     }
 
@@ -123,7 +144,7 @@ class ACStorage implements IACStorage {
         this.accessControl.register(tree);
     }
 
-    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<IAccessor>) {
+    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<ICustomAccessor>) {
         this.customAccessEvents[customId] = event;
     }
 

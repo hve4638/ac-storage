@@ -20,10 +20,16 @@ class JSONAccessor implements IJSONAccessor {
         this.#contents = {};
         if (tree) {
             this.#tree = tree;
-            this.#explorer = new TreeExplorer(tree, '.');
+            this.#explorer = TreeExplorer.from(tree, '.');
         }
+    }
 
+    loadData() {
         this.readFile();
+    }
+    
+    hasExistingData() {
+        return this.existsFile();
     }
     
     protected readFile() {
@@ -51,6 +57,11 @@ class JSONAccessor implements IJSONAccessor {
         } catch (error) {
             console.warn(`Failed to remove file ${this.#filePath}:`, error);
         }
+    }
+    protected existsFile() {
+        if (!fs.existsSync(this.#filePath)) return false;
+
+        return fs.statSync(this.#filePath).isDirectory();
     }
 
     get jsonStructure() {

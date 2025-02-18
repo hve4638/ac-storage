@@ -4,6 +4,9 @@ class MemBinaryAccessor implements IBinaryAccessor {
     #dropped:boolean = false;
     #buffer:Buffer = Buffer.from('');
     
+    hasExistingData() {
+        return false;
+    }
     write(buffer:Buffer) {
         this.#buffer = buffer;
     }

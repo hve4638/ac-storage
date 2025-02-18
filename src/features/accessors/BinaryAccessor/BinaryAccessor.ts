@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
-import type { IAccessor } from '../types';
+import type { IAccessor, IBinaryAccessor } from '../types';
 import { AccessorError } from '../errors';
 
-class BinaryAccessor implements IAccessor {
+class BinaryAccessor implements IBinaryAccessor {
     #filePath:string;
     #dropped:boolean = false;
 
@@ -10,6 +10,9 @@ class BinaryAccessor implements IAccessor {
         this.#filePath = filePath;
     }
     
+    hasExistingData() {
+        return fs.existsSync(this.#filePath);
+    }
     write(buffer:Buffer) {
         this.#ensureNotDropped();
         

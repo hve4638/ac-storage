@@ -4,10 +4,10 @@ import MemBinaryAccessor from './MemBinaryAccessor';
 
 class BinaryAccessorManager implements IAccessorManager<IBinaryAccessor> {
     accessor : IBinaryAccessor;
-    dependOn = {};
-    dependBy = {};
+    dependent = new Set<string>();
+    dependency = new Set<string>();
     
-    static fromFile(actualPath:string) {
+    static fromFS(actualPath:string) {
         return new BinaryAccessorManager(new BinaryAccessor(actualPath));
     }
 
@@ -19,6 +19,15 @@ class BinaryAccessorManager implements IAccessorManager<IBinaryAccessor> {
         this.accessor = accessor;
     }
 
+    create() {
+        
+    }
+    load() {
+        
+    }
+    exists() {
+        return this.accessor.hasExistingData();
+    }
     move(ac:IAccessorManager<IBinaryAccessor>) {
         const newAC = this.copy(ac);
         this.drop();

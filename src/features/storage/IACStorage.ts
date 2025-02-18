@@ -1,13 +1,13 @@
 import type { IAccessor, IAccessorManager, } from 'features/accessors';
 import type { AccessTree } from 'features/StorageAccessControl';
-import type { IBinaryAccessor, IJSONAccessor, ITextAccessor } from 'features/accessors';
+import type { IBinaryAccessor, IJSONAccessor, ITextAccessor, ICustomAccessor } from 'features/accessors';
 import type { AccessType } from 'features/StorageAccess';
 import { AccessorEvent } from 'types';
 
 
 interface IACStorage {
     register(tree:AccessTree):void;
-    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<IAccessor>):void;
+    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<ICustomAccessor>):void;
     
     getAccessor(identifier:string, accessType:string):IAccessor;
     getJSONAccessor(identifier:string):IJSONAccessor;

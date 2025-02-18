@@ -1,14 +1,8 @@
 export {};import { type IAccessor } from 'features/accessors';
 
-export type AccessorEvent<AC extends IAccessor> = {
+export type AccessorEvent<AC={}> = {
     create: (actualPath:string, ...args:any[])=>AC;
-    /**
-     * Optional
-     * 
-     * 호환가능한 Accessor인 경우, copy 작업 시 호출된다.
-     * 
-     * 구현하지 않은 경우, copy 작업에 실패한다.
-     */
+    
     copy? : (prevAC:AC, nextAC:AC)=>void;
     /**
      * Optional

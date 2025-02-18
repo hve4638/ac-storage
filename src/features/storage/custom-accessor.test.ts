@@ -26,7 +26,7 @@ describe('Storage Accessor Test', () => {
                     array : [],
                     commit() {},
                     drop() {},
-                    get dropped() { return false; },
+                    isDropped() { return false; },
                 };
             }
         });
@@ -37,7 +37,7 @@ describe('Storage Accessor Test', () => {
                     value : initValue,
                     commit() {},
                     drop() {},
-                    get dropped() { return false; },
+                    isDropped() { return false; },
                 };
             }
         });

@@ -1,32 +1,39 @@
 import * as fs from 'fs';
 import { IAccessor } from '../types';
+import { IDirectoryAccessor } from './types';
 
-class DirectoryAccessor implements IAccessor {
-    actualPath:string;
+class DirectoryAccessor implements IDirectoryAccessor {
+    #actualPath:string;
 
     constructor(actualPath:string) {
-        this.actualPath = actualPath;
-        
-        if (!fs.existsSync(actualPath)) {
-            fs.mkdirSync(actualPath, { recursive: true });
+        this.#actualPath = actualPath;
+    }
+
+    create() {
+        if (!fs.existsSync(this.#actualPath)) {
+            fs.mkdirSync(this.#actualPath, { recursive: true });
         }
     }
 
-    commit() {
-        // nothing to do
+    exists() {
+        try {
+            if (!fs.existsSync(this.#actualPath)) return false;
+
+            const stat = fs.statSync(this.#actualPath);
+            return stat.isDirectory();
+        }
+        catch {
+            return false;
+        }
     }
 
     drop() {
         try {
-            fs.rmdirSync(this.actualPath, { recursive: true });
+            fs.rmdirSync(this.#actualPath, { recursive: true });
         }
         catch {
 
         }
-    }
-
-    get dropped() {
-        return !fs.existsSync(this.actualPath);
     }
 }
 

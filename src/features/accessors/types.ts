@@ -1,14 +1,17 @@
 import { JSONTree } from "types/json";
 
-export interface IAccessorManager<AC extends IAccessor> {
+export interface IAccessorManager<AC=unknown> {
     accessor:AC;
-    dependOn : Record<string, IAccessorManager<IAccessor>>;
-    dependBy : Record<string, WeakRef<IAccessorManager<IAccessor>>>;
+    dependent : Set<string>;
+    dependency : Set<string>;
 
+    create():void;
+    load():void;
+    exists():boolean;
     move(newACM:IAccessorManager<AC>):void;
     copy(newACM:IAccessorManager<AC>):void;
 
-    isCompatible(other:IAccessorManager<IAccessor>):boolean;
+    isCompatible(other:IAccessorManager):boolean;
 
     drop():void;
     commit():void;
@@ -16,13 +19,16 @@ export interface IAccessorManager<AC extends IAccessor> {
 }
 
 export interface IAccessor {
-    commit():void;
-    drop():void;
-    get dropped():boolean;
+    // commit():void;
+    // drop():void;
+    // get dropped():boolean;
 }
 
 export interface IJSONAccessor extends IAccessor {
     get jsonStructure():JSONTree|null;
+    
+    loadData():void;
+    hasExistingData():boolean;
 
     set(items:Record<string, any>):string[];
     setOne(key:string, value:any):void;
@@ -31,17 +37,33 @@ export interface IJSONAccessor extends IAccessor {
     getAll():Record<string, any>;
     remove(keys:string[]):void;
     removeOne(key:string):void;
+    
+    commit():void;
+    drop():void;
+    get dropped():boolean;
 }
 
 export interface ITextAccessor extends IAccessor {
+    hasExistingData():boolean;
+    
     write(contents:string):void;
     append(contents:string):void;
     read():string;
+    
+    commit():void;
+    drop():void;
+    get dropped():boolean;
 }
 
 export interface IBinaryAccessor extends IAccessor {
+    hasExistingData():boolean;
+
     write(buffer:Buffer):void;
     read():Buffer;
     writeBase64(data:string):void;
     readBase64():string;
+    
+    commit():void;
+    drop():void;
+    get dropped():boolean;
 }

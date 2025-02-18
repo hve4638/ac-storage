@@ -8,14 +8,40 @@ type TreeResult = {
 }
 
 class TreeExplorer {
-    #tree:Tree;
-    #splitChar:string;
-    #allowWildcard:boolean;
+    #tree:Tree = {};
+    #splitChar:string = '.';
+    #allowWildcard:boolean = true;
 
-    constructor(tree:Tree, splitChar:string='.', allowWildcard:boolean = true) {
-        this.#tree = JSON.parse(JSON.stringify(tree));
-        this.#splitChar = splitChar;
-        this.#allowWildcard = allowWildcard;
+    static Dir = Symbol('directory-tag');
+
+    static from(tree:Tree, splitChar:string='.', allowWildcard:boolean = true):TreeExplorer {
+        const explorer = new TreeExplorer();
+        explorer.#tree = JSON.parse(JSON.stringify(tree));
+        explorer.#splitChar = splitChar;
+        explorer.#allowWildcard = allowWildcard;
+
+        return explorer;
+    }
+
+    private constructor() {}
+
+    subtree(path:string):TreeExplorer {
+        const keys = path.split(this.#splitChar);
+        const result = this.#find(keys, this.#tree);
+        if (!result) {
+            throw new Error(`Path '${path}' does not exist`);
+        }
+        if (result.value == null || typeof result.value !== 'object') {
+            throw new Error(`Path '${path}' is not a subtree`);
+        }
+
+        const subtree = result.path.reduce((tree, key) => tree[key], this.#tree);
+        const explorer = new TreeExplorer();
+        explorer.#tree = subtree;
+        explorer.#splitChar = this.#splitChar;
+        explorer.#allowWildcard = this.#allowWildcard;
+
+        return explorer;
     }
 
     get(path:string) {

@@ -13,12 +13,12 @@ class StorageAccessControl {
 
     constructor(events:StorageAccessControlEvent) {
         this.#events = events;
-        this.accessTree = new TreeExplorer({}, ':', true);
+        this.accessTree = TreeExplorer.from({}, ':', true);
     }
 
     register(tree:AccessTree) {
         this.#rawTree = tree;
-        this.accessTree = new TreeExplorer(tree, ':', true);
+        this.accessTree = TreeExplorer.from(tree, ':', true);
     }
 
     copy(oldIdentifier:string, newIdentifier:string, accessType:string) {
@@ -53,16 +53,30 @@ class StorageAccessControl {
         // 실제 접근
         const splited = identifier.split(':');
         const length = walked.path.length;
+
+        let prevACC = '';
         let acc = '';
-        const addAcc = (id:string) => { acc = (acc === '' ? id : `${acc}:${id}`) };
+        const addAcc = (id:string) => {
+            prevACC = acc;
+            acc = (acc === '' ? id : `${acc}:${id}`);
+        };
+        const chainDependency = () => {
+            if (prevACC !== '') this.#events.onChainDependency(prevACC, acc);
+        }
+        let subtree = this.#rawTree;
         for (let i = 0; i < length-1; i++) {
             addAcc(splited[i]);
-
-            this.#events.onAccessDir(acc);
+            subtree = subtree[splited[i]] as AccessTree;
+            
+            this.#events.onAccessDir(acc, subtree);
+            chainDependency();
         }
         addAcc(splited[length-1]);
+
+        const ac = this.#events.onAccess(acc, resolvedAccess);
+        chainDependency();
         
-        return this.#events.onAccess(acc, resolvedAccess);
+        return ac;
     }
 
     release(identifier:string) {

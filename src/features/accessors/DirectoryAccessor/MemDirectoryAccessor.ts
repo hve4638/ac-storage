@@ -1,23 +1,18 @@
 import * as fs from 'fs';
 import { IAccessor } from '../types';
+import { IDirectoryAccessor } from './types';
 
-class MemDirectoryAccessor implements IAccessor {
+class MemDirectoryAccessor implements IDirectoryAccessor {
 
     constructor() {
 
     }
 
-    commit() {
-        // nothing to do
+    create() {}
+    exists(): boolean {
+        return true;    
     }
-
-    drop() {
-        // nothing to do
-    }
-
-    get dropped() {
-        return false;
-    }
+    drop() {}
 }
 
 export default MemDirectoryAccessor;

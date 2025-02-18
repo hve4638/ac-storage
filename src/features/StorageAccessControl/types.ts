@@ -11,7 +11,8 @@ export type AccessTree = {
 
 export type StorageAccessControlEvent = {
     onAccess:(identifier:string, accessType:Accesses)=>IAccessorManager<IAccessor>,
-    onAccessDir:(identifier:string)=>void,
+    onAccessDir:(identifier:string, tree:AccessTree)=>void,
     onRelease:(identifier:string)=>void,
     onReleaseDir:(identifier:string)=>void,
+    onChainDependency:(idDependBy:string, idDependTo:string)=>void,
 }

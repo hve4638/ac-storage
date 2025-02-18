@@ -51,6 +51,13 @@ class MemACStorage extends ACStorage {
                 const childIds = Array.from(this.accessors.keys()).filter((key)=>key.startsWith(childPrefix));
                 childIds.forEach((id) => this.accessors.delete(id));
             },
+            onChainDependency: (dependentId, dependencyId) => {
+                const dependent = this.accessors.get(dependentId);
+
+                if (dependent) {
+                    dependent.dependent.add(dependencyId);
+                }
+            },
         });
     }
 }

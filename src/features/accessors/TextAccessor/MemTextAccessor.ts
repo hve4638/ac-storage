@@ -5,6 +5,9 @@ class MemTextAccessor implements ITextAccessor {
     #dropped:boolean = false;
     #contents:string = '';
 
+    hasExistingData() {
+        return false;
+    }
     write(text:string) {
         this.#contents = text;
     }
