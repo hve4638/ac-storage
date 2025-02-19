@@ -85,7 +85,7 @@ class StorageAccessControl {
             throw new NotRegisterError(`'${identifier}' is not registered.`);
         }
 
-        if (!this.checkAccessIsDirectory(walked.value)) {
+        if (this.checkAccessIsDirectory(walked.value)) {
             throw new DirectoryAccessError(`'${identifier}' is directory.`);
         }
         this.#events.onRelease(identifier);

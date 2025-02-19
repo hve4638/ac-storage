@@ -116,11 +116,9 @@ describe('StorageAccessControl Test', () => {
         dependency.length = 0;
 
         ac.access('layer1:layer2:data.txt', 'text');
-        expect(dependency).toEqual([dep('layer1', 'layer1:layer2')]);
-        expect(dependency).toEqual([dep('layer1', 'layer1:layer2:config.json')]);
-        
-        // expect(()=>ac.access('base', 'text')).toThrow(DirectoryAccessError);
-        // expect(()=>ac.access('layer1', 'text')).toThrow(DirectoryAccessError);
-        // expect(()=>ac.access('layer1:layer2', 'text')).toThrow(DirectoryAccessError);
+        expect(dependency).toEqual([
+            dep('layer1', 'layer1:layer2'),
+            dep('layer1:layer2', 'layer1:layer2:data.txt')
+        ]);
     });
 });

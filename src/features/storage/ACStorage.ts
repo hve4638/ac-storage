@@ -221,10 +221,11 @@ class ACStorage implements IACStorage {
     }
 
     dropAccessor(identifier:string) {
-        const acm = this.accessors.get(identifier)
-        if (acm && !acm.isDropped()) {
-            acm.drop();
-        }
+        this.accessControl.release(identifier);
+        // const acm = this.accessors.get(identifier)
+        // if (acm && !acm.isDropped()) {
+        //     acm.drop();
+        // }
     }
     
     dropAllAccessor() {
