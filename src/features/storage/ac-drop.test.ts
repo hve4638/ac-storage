@@ -25,6 +25,10 @@ describe('Accessor Drop', () => {
         });
     });
 
+    afterEach(() => {
+        storage.dropAll();
+    });
+
     test('drop', () => { 
         const dropLog:string[] = [];
 
