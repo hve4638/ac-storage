@@ -31,10 +31,21 @@ describe('ACSubStorage', () => {
     test('substorage', () => {
         const storageLayer1 = storage.subStorage('layer1');
 
-        const item1FromSubstorage = storageLayer1.getJSONAccessor('layer2:item1.json');
+        const item1FromSubstorage = storageLayer1.getJSONAccessor('layer2:item.json');
         item1FromSubstorage.setOne('value', '1');
 
-        const item1 = storage.getJSONAccessor('layer1:layer2:item1.json');
+        const item1 = storage.getJSONAccessor('layer1:layer2:item.json');
+        expect(item1.getOne('value')).toBe('1');
+    });
+
+    test('2-layer substorage', () => {
+        const storageLayer1 = storage.subStorage('layer1');
+        const storageLayer2 = storageLayer1.subStorage('layer2');
+
+        const item1FromSubstorage = storageLayer2.getJSONAccessor('item.json');
+        item1FromSubstorage.setOne('value', '1');
+
+        const item1 = storage.getJSONAccessor('layer1:layer2:item.json');
         expect(item1.getOne('value')).toBe('1');
     });
 

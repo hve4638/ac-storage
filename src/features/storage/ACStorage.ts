@@ -13,7 +13,7 @@ import {
 
 import ACSubStorage from './ACSubStorage';
 import { StorageError } from './errors';
-import { IACStorage } from './types';
+import { IACStorage, IACSubStorage } from './types';
 
 class ACStorage implements IACStorage {
     protected eventListeners:{
@@ -154,7 +154,7 @@ class ACStorage implements IACStorage {
         this.customAccessEvents[customId] = event;
     }
 
-    subStorage(identifier:string):ACSubStorage {
+    subStorage(identifier:string):IACSubStorage {
         const accessType = this.accessControl.getAccessType(identifier);
         if (accessType.length !== 1 && accessType[0] !== 'directory') {
             throw new StorageError(`Cannot infer the access type of ${identifier}`);

@@ -10,6 +10,10 @@ class ACSubStorage implements IACSubStorage {
         this.#master = master;
         this.#prefix = prefix;
     }
+    
+    subStorage(identifier:string):IACSubStorage {
+        return this.#master.subStorage(this.#prefix + ':' + identifier);
+    }
 
     getJSONAccessor(identifier:string):IJSONAccessor {
         return this.getAccessor(identifier, 'json') as IJSONAccessor;

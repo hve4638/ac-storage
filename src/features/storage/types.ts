@@ -23,6 +23,8 @@ export interface IACStorage {
 }
 
 export interface IACSubStorage {
+    subStorage (prefix:string):IACSubStorage;
+    
     getAccessor(identifier:string, accessType:string):unknown;
     getJSONAccessor(identifier:string):IJSONAccessor;
     getTextAccessor(identifier:string):ITextAccessor;
