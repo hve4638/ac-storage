@@ -16,6 +16,9 @@ export interface IACStorage {
     getTextAccessor(identifier:string):ITextAccessor;
     getBinaryAccessor(identifier:string):IBinaryAccessor;
     
+    copyAccessor(oldIdentifier:string, newIdentifier:string):void;
+    moveAccessor(oldIdentifier:string, newIdentifier:string):void;
+    
     dropDir(identifier:string):void;
     drop(identifier:string):void;
     dropAll():void;
@@ -24,11 +27,14 @@ export interface IACStorage {
 
 export interface IACSubStorage {
     subStorage (prefix:string):IACSubStorage;
-    
+
     getAccessor(identifier:string, accessType:string):unknown;
     getJSONAccessor(identifier:string):IJSONAccessor;
     getTextAccessor(identifier:string):ITextAccessor;
     getBinaryAccessor(identifier:string):IBinaryAccessor;
+
+    copyAccessor(oldIdentifier:string, newIdentifier:string):void;
+    moveAccessor(oldIdentifier:string, newIdentifier:string):void;
     
     dropDir(identifier:string):void;
     drop(identifier:string):void;

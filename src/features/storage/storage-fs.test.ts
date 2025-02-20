@@ -317,4 +317,40 @@ describe('ACStorage FS Test', () => {
         const nextAC = storage.getJSONAccessor('next:index.json');
         expect(nextAC.getAll()).toEqual({ value : 1 });
     });
+
+    test('SubStorage 복사', ()=>{
+        const prevPath = getPath('layer1/prev.json');
+        const nextPath = getPath('layer1/next.json');
+        
+        // 0. 초기 상태
+        expect(isFile(prevPath)).toBeFalsy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 1. 저장소 등록
+        storage.register({
+            'layer1' : {
+                '*' : StorageAccess.JSON({ value : JSONType.number }),
+            },
+        });
+        
+        // 2. 저장소 생성
+        let substorage = storage.subStorage('layer1');
+        let prev = substorage.getJSONAccessor('prev.json');
+        prev.setOne('value', 1);
+        storage.commit();
+
+        expect(isFile(prevPath)).toBeTruthy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 3. 새 저장소 생성 및 복사
+        substorage.copyAccessor('prev.json', 'next.json');
+        substorage.commitAll();
+
+        expect(isFile(prevPath)).toBeTruthy();
+        expect(isFile(nextPath)).toBeTruthy();
+
+        // 4. 내용 확인
+        const nextAC = storage.getJSONAccessor('layer1:next.json');
+        expect(nextAC.getAll()).toEqual({ value : 1 });
+    });
 });

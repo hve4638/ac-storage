@@ -27,12 +27,13 @@ class ACSubStorage implements IACSubStorage {
     getAccessor(identifier:string, accessType:string):unknown {
         return this.#master.getAccessor(this.#prefix + ':' + identifier, accessType);
     }
+
     copyAccessor(oldIdentifier:string, newIdentifier:string) {
-        this.copyAccessor(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
+        this.#master.copyAccessor(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
     }
 
     moveAccessor(oldIdentifier:string, newIdentifier:string) {
-        this.moveAccessor(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
+        this.#master.moveAccessor(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
     }
     
     dropDir(identifier:string) {
