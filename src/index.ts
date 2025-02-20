@@ -13,6 +13,7 @@ export {
     StorageAccessError,
 } from 'features/StorageAccessControl';
 export {
+    type IACSubStorage,
     type IACStorage,
     ACStorage,
     MemACStorage,

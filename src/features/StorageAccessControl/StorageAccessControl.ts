@@ -111,9 +111,12 @@ class StorageAccessControl {
                 : access.accessType
             )
         }
-        const access:Accesses = this.accessTree.get(identifier);
+        const access:Accesses|null = this.accessTree.get(identifier);
 
-        if (this.checkAccessIsDirectory(access)) {
+        if (access == null) {
+            return [];
+        }
+        else if (this.checkAccessIsDirectory(access)) {
             return ['directory'];
         }
         else {

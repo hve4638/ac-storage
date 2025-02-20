@@ -1,9 +1,9 @@
-import StorageAccess from "features/StorageAccess";
-import MemACStorage from "./MemACStorage";
-import IACStorage from "./IACStorage";
-import path from "path";
-import { TEST_PATH } from "data/test";
-import ACStorage from "./ACStorage";
+import StorageAccess from 'features/StorageAccess';
+import MemACStorage from './MemACStorage';
+import { IACStorage } from './types';
+import path from 'path';
+import { TEST_PATH } from 'data/test';
+import ACStorage from './ACStorage';
 
 describe('Accessor Drop', () => {
     const testDirectory = path.join(TEST_PATH, 'ac-drop');
@@ -35,9 +35,6 @@ describe('Accessor Drop', () => {
         storage.addListener('release', (identifier:string) => {
             dropLog.push(identifier);
         });
-        storage.addListener('release-dir', (identifier:string) => {
-            dropLog.push(identifier);
-        });
 
         storage.getAccessor('layer1:layer2:item1', 'text');
         storage.getAccessor('layer1:layer2:item2', 'text');
@@ -59,13 +56,7 @@ describe('Accessor Drop', () => {
         storage.addListener('access', (identifier:string) => {
             accessLog.push(identifier);
         });
-        storage.addListener('access-dir', (identifier:string) => {
-            accessLog.push(identifier);
-        });
         storage.addListener('release', (identifier:string) => {
-            dropLog.push(identifier);
-        });
-        storage.addListener('release-dir', (identifier:string) => {
             dropLog.push(identifier);
         });
 
@@ -95,13 +86,7 @@ describe('Accessor Drop', () => {
         storage.addListener('access', (identifier:string) => {
             accessLog.push(identifier);
         });
-        storage.addListener('access-dir', (identifier:string) => {
-            accessLog.push(identifier);
-        });
         storage.addListener('release', (identifier:string) => {
-            dropLog.push(identifier);
-        });
-        storage.addListener('release-dir', (identifier:string) => {
             dropLog.push(identifier);
         });
 

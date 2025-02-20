@@ -1,4 +1,4 @@
-export type { default as IACStorage } from './IACStorage';
+export type { IACStorage, IACSubStorage } from './types';
 export { default as ACStorage } from './ACStorage';
 export { default as MemACStorage } from './MemACStorage';
 export {

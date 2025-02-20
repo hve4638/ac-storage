@@ -4,11 +4,12 @@ import type { AccessType } from 'features/StorageAccess';
 import { AccessorEvent } from 'types';
 
 
-interface IACStorage {
-    addListener(event:'release'|'access'|'release-dir'|'access-dir', listener:Function):void;
+export interface IACStorage {
+    addListener(event:'release'|'access', listener:Function):void;
 
     register(tree:AccessTree):void;
     addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<ICustomAccessor>):void;
+    subStorage (prefix:string):IACSubStorage;
     
     getAccessor(identifier:string, accessType:string):unknown;
     getJSONAccessor(identifier:string):IJSONAccessor;
@@ -21,4 +22,15 @@ interface IACStorage {
     commit():void;
 }
 
-export default IACStorage;
+export interface IACSubStorage {
+    getAccessor(identifier:string, accessType:string):unknown;
+    getJSONAccessor(identifier:string):IJSONAccessor;
+    getTextAccessor(identifier:string):ITextAccessor;
+    getBinaryAccessor(identifier:string):IBinaryAccessor;
+    
+    dropDir(identifier:string):void;
+    drop(identifier:string):void;
+    dropAll():void;
+    commit(identifier:string):void;
+    commitAll():void;
+}

@@ -11,8 +11,9 @@ import {
     RootAccessorManager,
 } from 'features/accessors';
 
+import ACSubStorage from './ACSubStorage';
 import { StorageError } from './errors';
-import IACStorage from './IACStorage';
+import { IACStorage } from './types';
 
 class ACStorage implements IACStorage {
     protected eventListeners:{
@@ -153,6 +154,15 @@ class ACStorage implements IACStorage {
         this.customAccessEvents[customId] = event;
     }
 
+    subStorage(identifier:string):ACSubStorage {
+        const accessType = this.accessControl.getAccessType(identifier);
+        if (accessType.length !== 1 && accessType[0] !== 'directory') {
+            throw new StorageError(`Cannot infer the access type of ${identifier}`);
+        }
+
+        return new ACSubStorage(this, identifier);
+    }
+
     getJSONAccessor(identifier:string):IJSONAccessor {
         return this.getAccessor(identifier, 'json') as IJSONAccessor;
     }
@@ -231,14 +241,27 @@ class ACStorage implements IACStorage {
         this.accessControl.releaseDir('');
     }
 
-    commit() {
-        for (const accessor of this.accessors.values()) {
-            if (accessor.isDropped()) continue;
-
-            accessor.commit();
-        }
+    commit(identifier:string='') {
+        this.#commitRecursive(identifier);
         
         if (!this.noCache) this.saveCache();
+    }
+
+    commitAll() {
+        this.#commitRecursive('');
+
+        if (!this.noCache) this.saveCache();     
+    }
+
+    #commitRecursive(identifier:string) {
+        const accessor = this.accessors.get(identifier);
+        if (!accessor) return;
+
+        for (const childIdentifier of accessor.dependent) {
+            this.#commitRecursive(childIdentifier);
+        }
+
+        if (!accessor.isDropped()) accessor.commit();
     }
 }
 
