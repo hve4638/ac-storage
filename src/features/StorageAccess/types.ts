@@ -1,6 +1,6 @@
 import { JSONTree } from 'types/json';
 
-export type AccessType = 'nothing' | 'text' | 'binary' | 'json' | 'custom' | 'union';
+export type AccessType = 'nothing' | 'text' | 'binary' | 'json' | 'custom' | 'union' | 'directory';
 
 export type BasicAccess = {
     accessType : 'nothing' | 'text' | 'binary'
@@ -18,7 +18,10 @@ export type UnionAccess = {
     accessType : 'union',
     accesses : Accesses[]
 }
+export type DirectoryAccess = {
+    accessType : 'directory',
+}
 
 export type NonUnionAccesses = BasicAccess | JSONAccess | CustomAccess;
-export type Accesses = NonUnionAccesses | UnionAccess;
+export type Accesses = NonUnionAccesses | UnionAccess | DirectoryAccess;
 

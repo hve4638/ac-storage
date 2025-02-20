@@ -1,5 +1,4 @@
 export type {
-    IAccessor,
     IBinaryAccessor,
     IJSONAccessor,
     ITextAccessor

@@ -1,4 +1,4 @@
-import { IAccessor, IAccessorManager, IBinaryAccessor } from '../types';
+import { IAccessorManager, IBinaryAccessor } from '../types';
 import DirectoryAccessor from './DirectoryAccessor';
 import MemDirectoryAccessor from './MemDirectoryAccessor';
 import { IDirectoryAccessor } from './types';
@@ -41,7 +41,7 @@ class DirectoryAccessorManager implements IAccessorManager<IDirectoryAccessor> {
 
     }
 
-    isCompatible(other:IAccessorManager<IAccessor>):other is DirectoryAccessorManager {
+    isCompatible(other:IAccessorManager<unknown>):other is DirectoryAccessorManager {
         return other instanceof DirectoryAccessorManager;
     }
     
@@ -52,7 +52,7 @@ class DirectoryAccessorManager implements IAccessorManager<IDirectoryAccessor> {
         
     }
     isDropped() {
-        return this.accessor.exists();
+        return !this.accessor.exists();
     }
 }
 

@@ -46,7 +46,7 @@ describe('ACStorage FS Test', () => {
     });
     afterEach(() => {
         fs.rmSync(testDirectory, { recursive: true });
-        storage.dropAllAccessor();
+        storage.dropAll();
     });
     
     test('파일 ACStorage FS 연동', () => {
@@ -85,11 +85,11 @@ describe('ACStorage FS Test', () => {
         verifyState({ config: true, data: true }, 4);
 
         // 5. 저장소 삭제
-        storage.dropAccessor('config.json');
+        storage.drop('config.json');
         verifyState({ config: false, data: true }, 6);
         
         // 6. 저장소 삭제
-        storage.dropAccessor('data.txt');
+        storage.drop('data.txt');
         verifyState({ config: false, data: false }, 7);
     });
 
@@ -135,7 +135,7 @@ describe('ACStorage FS Test', () => {
         verifyState({ base : true, config: true, data: true }, 3);
 
         // 4. 단일 접근자 삭제 (즉시 파일시스템 반영)
-        storage.dropAccessor('base:config.json');
+        storage.drop('base:config.json');
         verifyState({ base : true, config: false, data: true }, 4);
     });
 

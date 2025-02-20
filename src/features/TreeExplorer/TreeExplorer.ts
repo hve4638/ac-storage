@@ -51,6 +51,13 @@ class TreeExplorer {
 
     walk(path:string):TreeResult|null {
         const keys = path.split(this.#splitChar);
+        if (path === '') {
+            return {
+                value : this.#tree,
+                path : []
+            } as TreeResult;
+        }
+
         return this.#find(keys, this.#tree);
     }
 

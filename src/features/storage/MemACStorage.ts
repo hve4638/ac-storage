@@ -1,4 +1,4 @@
-import { BinaryAccessorManager, IAccessor, IAccessorManager, JSONAccessorManager, TextAccessorManager } from 'features/accessors';
+import { BinaryAccessorManager, IAccessorManager, JSONAccessorManager, TextAccessorManager } from 'features/accessors';
 import { Accesses } from 'features/StorageAccess';
 import StorageAccessControl from 'features/StorageAccessControl';
 import { StorageError } from './errors';
@@ -17,7 +17,7 @@ class MemACStorage extends ACStorage {
                     return item;
                 }
 
-                let acm:IAccessorManager<IAccessor>;
+                let acm:IAccessorManager<unknown>;
                 switch(sa.accessType) {
                     case 'json':
                         acm = JSONAccessorManager.fromMemory();

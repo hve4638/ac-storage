@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import { IAccessor } from '../types';
 import { IDirectoryAccessor } from './types';
 
 class DirectoryAccessor implements IDirectoryAccessor {
@@ -29,7 +28,7 @@ class DirectoryAccessor implements IDirectoryAccessor {
 
     drop() {
         try {
-            fs.rmdirSync(this.#actualPath, { recursive: true });
+            fs.rmSync(this.#actualPath, { recursive: true });
         }
         catch {
 

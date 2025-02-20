@@ -1,5 +1,3 @@
-export {};import { type IAccessor } from 'features/accessors';
-
 export type AccessorEvent<AC={}> = {
     create: (actualPath:string, ...args:any[])=>AC;
     

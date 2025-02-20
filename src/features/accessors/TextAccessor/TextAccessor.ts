@@ -1,5 +1,5 @@
 import * as fs from 'node:fs';
-import type { IAccessor, ITextAccessor } from '../types';
+import type { ITextAccessor } from '../types';
 import { AccessorError } from '../errors';
 
 class TextAccessor implements ITextAccessor {

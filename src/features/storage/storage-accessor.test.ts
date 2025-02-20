@@ -4,7 +4,6 @@ import { TEST_PATH } from 'data/test';
 
 import { type IACStorage, MemACStorage } from 'features/storage';
 import StorageAccess from 'features/StorageAccess';
-import { IAccessor } from 'features/accessors';
 
 /**
  * 각 Accessor에 대한 테스트
@@ -30,7 +29,7 @@ describe('Storage Accessor Test', () => {
         });
     });
     afterEach(() => {
-        storage.dropAllAccessor();
+        storage.dropAll();
     });
     
     test('JSONAccessor', () => {

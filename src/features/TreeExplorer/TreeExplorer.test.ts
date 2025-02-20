@@ -45,7 +45,11 @@ describe('TreeExplorer', () => {
                 '*' : '0'
             }
         });
-    })
+    });
+    test('root', () => {
+        const explorer = TreeExplorer.from(TREE, ':');
+        expect(explorer.walk('')?.path).toEqual([]);
+    });
 });
 
 describe('Subtree from TreeExplorer', () => {
@@ -65,3 +69,4 @@ describe('Subtree from TreeExplorer', () => {
         expect(subtree.get('b')).toBe('0');
     });
 });
+

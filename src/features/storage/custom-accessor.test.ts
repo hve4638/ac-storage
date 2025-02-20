@@ -43,7 +43,7 @@ describe('Storage Accessor Test', () => {
         });
     });
     afterEach(() => {
-        storage.dropAllAccessor();
+        storage.dropAll();
     });
 
     test('CustomAccessor', () => {

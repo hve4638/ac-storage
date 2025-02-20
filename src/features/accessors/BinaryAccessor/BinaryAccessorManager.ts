@@ -1,5 +1,5 @@
 import BinaryAccessor from './BinaryAccessor';
-import { IAccessor, IAccessorManager, IBinaryAccessor } from '../types';
+import { IAccessorManager, IBinaryAccessor } from '../types';
 import MemBinaryAccessor from './MemBinaryAccessor';
 
 class BinaryAccessorManager implements IAccessorManager<IBinaryAccessor> {
@@ -42,7 +42,7 @@ class BinaryAccessorManager implements IAccessorManager<IBinaryAccessor> {
         ac.accessor.write(this.accessor.read());
     }
 
-    isCompatible(other:IAccessorManager<IAccessor>):other is BinaryAccessorManager {
+    isCompatible(other:IAccessorManager<unknown>):other is BinaryAccessorManager {
         return other instanceof BinaryAccessorManager;
     }
     

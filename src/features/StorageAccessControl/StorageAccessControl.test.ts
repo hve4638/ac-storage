@@ -112,11 +112,15 @@ describe('StorageAccessControl Test', () => {
         ac.register(fullTree);
         
         ac.access('base:config.json', 'json');
-        expect(dependency).toEqual([dep('base', 'base:config.json')]);
+        expect(dependency).toEqual([
+            dep('', 'base'),
+            dep('base', 'base:config.json')
+        ]);
         dependency.length = 0;
 
         ac.access('layer1:layer2:data.txt', 'text');
         expect(dependency).toEqual([
+            dep('', 'layer1'),
             dep('layer1', 'layer1:layer2'),
             dep('layer1:layer2', 'layer1:layer2:data.txt')
         ]);

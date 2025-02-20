@@ -1,4 +1,4 @@
-import { IAccessorManager, IAccessor } from 'features/accessors'
+import { IAccessorManager } from 'features/accessors'
 import { Accesses, AccessType } from 'features/StorageAccess'
 import TreeExplorer from 'features/TreeExplorer';
 
@@ -35,13 +35,13 @@ class StorageAccessControl {
         oldACM.move(newACM);
     }
     
-    access(identifier:string, accessType:string):IAccessor {
+    access(identifier:string, accessType:string):unknown {
         const acm = this.#getAccessorManager(identifier, accessType);
         
         return acm.accessor;
     }
 
-    #getAccessorManager(identifier:string, accessType:string):IAccessorManager<IAccessor> {
+    #getAccessorManager(identifier:string, accessType:string):IAccessorManager<unknown> {
         const walked = this.accessTree.walk(identifier);
         if (!walked) {
             throw new NotRegisterError(`'${identifier}' is not registered.`);
@@ -61,7 +61,7 @@ class StorageAccessControl {
             acc = (acc === '' ? id : `${acc}:${id}`);
         };
         const chainDependency = () => {
-            if (prevACC !== '') this.#events.onChainDependency(prevACC, acc);
+            this.#events.onChainDependency(prevACC, acc);
         }
         let subtree = this.#rawTree;
         for (let i = 0; i < length-1; i++) {
@@ -86,7 +86,7 @@ class StorageAccessControl {
         }
 
         if (this.checkAccessIsDirectory(walked.value)) {
-            throw new DirectoryAccessError(`'${identifier}' is directory.`);
+            throw new DirectoryAccessError(`> '${identifier}' is directory.`);
         }
         this.#events.onRelease(identifier);
     }
@@ -94,7 +94,7 @@ class StorageAccessControl {
     releaseDir(identifier:string) {
         this.validateDirectoryPath(identifier);
         
-        this.#events.onReleaseDir(identifier);
+        this.#events.onRelease(identifier);
     }
 
     getAccessType(identifier:string):string[] {

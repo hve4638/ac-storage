@@ -1,5 +1,5 @@
 import { AccessorEvent } from 'types';
-import { IAccessor, IAccessorManager } from '../types';
+import { IAccessorManager } from '../types';
 import { AccessorManagerError } from 'errors';
 import { ICustomAccessor } from './types';
 
@@ -58,7 +58,7 @@ class CustomAccessorManager<AC extends ICustomAccessor> implements IAccessorMana
         }
     }
 
-    isCompatible(other: IAccessorManager<IAccessor>): boolean {
+    isCompatible(other: IAccessorManager<unknown>): boolean {
         if (!(other instanceof CustomAccessorManager)) {
             return false;
         }

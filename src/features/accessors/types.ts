@@ -18,13 +18,7 @@ export interface IAccessorManager<AC=unknown> {
     isDropped():boolean;
 }
 
-export interface IAccessor {
-    // commit():void;
-    // drop():void;
-    // get dropped():boolean;
-}
-
-export interface IJSONAccessor extends IAccessor {
+export interface IJSONAccessor {
     get jsonStructure():JSONTree|null;
     
     loadData():void;
@@ -43,7 +37,7 @@ export interface IJSONAccessor extends IAccessor {
     get dropped():boolean;
 }
 
-export interface ITextAccessor extends IAccessor {
+export interface ITextAccessor {
     hasExistingData():boolean;
     
     write(contents:string):void;
@@ -55,7 +49,7 @@ export interface ITextAccessor extends IAccessor {
     get dropped():boolean;
 }
 
-export interface IBinaryAccessor extends IAccessor {
+export interface IBinaryAccessor {
     hasExistingData():boolean;
 
     write(buffer:Buffer):void;

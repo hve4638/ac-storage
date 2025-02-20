@@ -18,7 +18,7 @@ describe('ACStorage Test', () => {
         storage = new ACStorage(testDirectory);
     });
     afterEach(() => {
-        storage.dropAllAccessor();
+        storage.dropAll();
     });
 
     test('access unregistered storage', () => {

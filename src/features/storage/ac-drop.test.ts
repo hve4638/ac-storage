@@ -9,44 +9,123 @@ describe('Accessor Drop', () => {
     const testDirectory = path.join(TEST_PATH, 'ac-drop');
     let storage:IACStorage;
 
-    const TREE = {
-        'layer1' : {
-            'layer2' : {
-                '*' : StorageAccess.Custom('test')
-            },
-            '*' : StorageAccess.Custom('test'),
-        }
-    }
-
     beforeEach(() => {
         storage = new ACStorage(testDirectory);
-        storage.register(TREE);
+        storage.register({
+            'layer1' : {
+                'layer2' : {
+                    'layer3' : {
+                        '*' : StorageAccess.Text()
+                    },
+                    '*' : StorageAccess.Text()
+                },
+                '*' : StorageAccess.Text(),
+            },
+            '*' : StorageAccess.Text(),
+        });
     });
 
     test('drop', () => { 
         const dropLog:string[] = [];
 
-        storage.addAccessEvent('test', {
-            create: (actual:string) => {
-                return {
-                    commit() {
-
-                    },
-                    drop() {
-                        dropLog.push(actual);
-                    },
-                    isDropped() {
-                        return false;
-                    }
-                };
-            },
+        storage.addListener('release', (identifier:string) => {
+            dropLog.push(identifier);
+        });
+        storage.addListener('release-dir', (identifier:string) => {
+            dropLog.push(identifier);
         });
 
-        storage.getAccessor('layer1:item1', 'test');
-        storage.getAccessor('layer1:layer2:item2', 'test');
-        storage.getAccessor('layer1:layer2:item3', 'test');
+        storage.getAccessor('layer1:layer2:item1', 'text');
+        storage.getAccessor('layer1:layer2:item2', 'text');
+        storage.getAccessor('layer1:layer2:item3', 'text');
         
         storage.dropDir('layer1:layer2');
-        expect(dropLog).toEqual(['layer1:layer2:item2', 'layer1:layer2:item3']);
+        expect(dropLog).toEqual([
+            'layer1:layer2:item1',
+            'layer1:layer2:item2',
+            'layer1:layer2:item3',
+            'layer1:layer2',
+        ]);
+    });
+
+    
+    test('drop2', () => { 
+        const accessLog:string[] = [];
+        const dropLog:string[] = [];
+        storage.addListener('access', (identifier:string) => {
+            accessLog.push(identifier);
+        });
+        storage.addListener('access-dir', (identifier:string) => {
+            accessLog.push(identifier);
+        });
+        storage.addListener('release', (identifier:string) => {
+            dropLog.push(identifier);
+        });
+        storage.addListener('release-dir', (identifier:string) => {
+            dropLog.push(identifier);
+        });
+
+        storage.getAccessor('layer1:layer2:item2', 'text');
+        storage.getAccessor('layer1:layer2:item3', 'text');
+        
+        storage.dropDir('layer1');
+        expect(accessLog).toEqual([
+            'layer1',
+            'layer1:layer2',
+            'layer1:layer2:item2',
+            'layer1',
+            'layer1:layer2',
+            'layer1:layer2:item3',
+        ]);
+        expect(dropLog).toEqual([
+            'layer1:layer2:item2',
+            'layer1:layer2:item3',
+            'layer1:layer2',
+            'layer1',
+        ]);
+    });
+
+    test('dropAll', () => {
+        const accessLog:string[] = [];
+        const dropLog:string[] = [];
+        storage.addListener('access', (identifier:string) => {
+            accessLog.push(identifier);
+        });
+        storage.addListener('access-dir', (identifier:string) => {
+            accessLog.push(identifier);
+        });
+        storage.addListener('release', (identifier:string) => {
+            dropLog.push(identifier);
+        });
+        storage.addListener('release-dir', (identifier:string) => {
+            dropLog.push(identifier);
+        });
+
+        storage.getAccessor('item1', 'text');
+        storage.getAccessor('layer1:item2', 'text');
+        storage.getAccessor('layer1:layer2:item3', 'text');
+        storage.getAccessor('layer1:layer2:item4', 'text');
+        storage.commit();
+        
+        storage.dropAll();
+        expect(accessLog).toEqual([
+            'item1',
+            'layer1',
+            'layer1:item2',
+            'layer1',
+            'layer1:layer2',
+            'layer1:layer2:item3',
+            'layer1',
+            'layer1:layer2',
+            'layer1:layer2:item4',
+        ]);
+        expect(dropLog).toEqual([
+            'item1',
+            'layer1:item2',
+            'layer1:layer2:item3',
+            'layer1:layer2:item4',
+            'layer1:layer2',
+            'layer1',
+        ]);
     });
 });

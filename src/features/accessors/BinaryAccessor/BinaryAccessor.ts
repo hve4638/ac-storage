@@ -1,5 +1,5 @@
 import * as fs from 'node:fs';
-import type { IAccessor, IBinaryAccessor } from '../types';
+import type { IBinaryAccessor } from '../types';
 import { AccessorError } from '../errors';
 
 class BinaryAccessor implements IBinaryAccessor {

@@ -1,6 +1,6 @@
 import JSONAccessor from './JSONAccessor';
 import MemJSONAccessor from './MemJSONAccessor';
-import { IAccessor, IAccessorManager, IJSONAccessor } from '../types';
+import { IAccessorManager, IJSONAccessor } from '../types';
 import { JSONTree } from 'types/json';
 
 class JSONAccessorManager implements IAccessorManager<IJSONAccessor> {
@@ -43,7 +43,7 @@ class JSONAccessorManager implements IAccessorManager<IJSONAccessor> {
         acm.accessor.set(this.accessor.getAll());
     }
 
-    isCompatible(other: IAccessorManager<IAccessor>): other is JSONAccessorManager {
+    isCompatible(other: IAccessorManager<unknown>): other is JSONAccessorManager {
         if (!(other instanceof JSONAccessorManager)) {
             return false;
         }

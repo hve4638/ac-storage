@@ -2,25 +2,34 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { AccessorEvent } from 'types';
 
-import { IAccessor, IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager, CustomAccessorManager, ICustomAccessor } from 'features/accessors';
+import { IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager, CustomAccessorManager, ICustomAccessor } from 'features/accessors';
 import StorageAccessControl, { AccessTree } from 'features/StorageAccessControl';
 import StorageAccess, { Accesses, AccessType } from 'features/StorageAccess';
 import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from 'features/accessors/types';
+import {
+    DirectoryAccessorManager,
+    RootAccessorManager,
+} from 'features/accessors';
 
 import { StorageError } from './errors';
 import IACStorage from './IACStorage';
-import DirectoryAccessorManager from 'features/accessors/DirectoryAccessor/DirectoryAccessorManager';
 
 class ACStorage implements IACStorage {
+    protected eventListeners:{
+        access?: Function,
+        access_dir?: Function,
+        release?: Function,
+        release_dir?: Function,
+    } = {};
+
     protected cachePath:string;
     protected noCache:boolean;
 
     protected basePath: string;
     protected customAccessEvents: Record<string, AccessorEvent<ICustomAccessor>> = {};
-    protected accessors:Map<string, IAccessorManager<IAccessor>> = new Map();
+    protected accessors:Map<string, IAccessorManager<unknown>> = new Map();
 
     protected accessControl:StorageAccessControl;
-
     protected accessCache:Record<string, string> = {};
 
     constructor(basePath:string, noCache:boolean=false) {
@@ -28,6 +37,8 @@ class ACStorage implements IACStorage {
         this.accessControl = this.initAccessControl();
         this.cachePath = path.join(this.basePath, '.acstorage');
         this.noCache = noCache;
+
+        this.accessors.set('', RootAccessorManager.fromFS());
 
         if (!this.noCache) this.loadCache();
     }
@@ -50,94 +61,122 @@ class ACStorage implements IACStorage {
     }
 
     protected initAccessControl():StorageAccessControl {
-        const releaseAccessor = (identifier:string) => {
+        const onAccess = (identifier:string, sa:Accesses) => {
+            const targetPath = path.join(this.basePath, identifier.replaceAll(':', '/'));
+            this.eventListeners.access?.(identifier, sa);
+
+            let item = this.accessors.get(identifier);
+            if (item != undefined && !item.isDropped()) {
+                return item;
+            }
+            
+            let acm:IAccessorManager<unknown>;
+            switch(sa.accessType) {
+                case 'json':
+                    acm = JSONAccessorManager.fromFS(targetPath);
+                    break;
+                case 'binary':
+                    acm = BinaryAccessorManager.fromFS(targetPath);
+                    break;
+                case 'text':
+                    acm = TextAccessorManager.fromFS(targetPath);
+                    break;
+                case 'custom':
+                    const event = this.customAccessEvents[sa.id];
+                    if (!event) {
+                        throw new StorageError('Invalid access type');
+                    }
+                    const ac = event.create(targetPath, ...sa.args);
+                    acm = CustomAccessorManager.from(ac, sa.id, event);
+                    break;
+                default:
+                    // 기본 타입 이외에는 custom 타입으로 wrap되기 때문에 이 경우가 발생하지 않음
+                    throw new StorageError('Invalid access type');
+                    break;
+            }
+            if (!acm.exists()) acm.create();
+            else acm.load();
+            
+            this.accessCache[identifier] = sa.accessType !== 'custom' ? sa.accessType : sa.id;
+            this.accessors.set(identifier, acm);
+            return acm;
+        }
+        const onAccessDir = (identifier:string, tree:AccessTree) => {
+            this.eventListeners.access_dir?.(identifier, tree);
+
+            let item = this.accessors.get(identifier);
+            if (item != undefined && !item.isDropped()) {
+                return item;
+            }
+
+            const targetPath = identifier.replaceAll(':', '/');
+            const dirPath = path.join(this.basePath, targetPath);
+
+            const acm = DirectoryAccessorManager.fromFS(dirPath, tree);
+            if (!acm.exists()) acm.create();
+            else acm.load();
+            
+            this.accessors.set(identifier, acm);
+        };
+        const onRelease = (identifier:string) => {
             const accessor = this.accessors.get(identifier);
             if (!accessor) return;
 
             for (const child of accessor.dependent) {
-                releaseAccessor(child);
+                onRelease(child);
             }
+            if (identifier === '') return;
+            this.eventListeners.release?.(identifier);
 
             if (!accessor.isDropped()) accessor.drop();
 
             delete this.accessCache[identifier];
             this.accessors.delete(identifier);
-        }
-
-        return new StorageAccessControl({
-            onAccess: (identifier:string, sa:Accesses) => {
-                const targetPath = path.join(this.basePath, identifier.replaceAll(':', '/'));
-
-                let item = this.accessors.get(identifier);
-                if (item != undefined && !item.isDropped()) {
-                    return item;
+        };
+        const onReleaseDir = (identifier:string) => {
+            this.eventListeners.release_dir?.(identifier);
+            
+            const accessor = this.accessors.get(identifier);
+            if (accessor) {
+                if (!accessor.isDropped()) {
+                    accessor.drop();
                 }
-
-                let acm:IAccessorManager<IAccessor>;
-                switch(sa.accessType) {
-                    case 'json':
-                        acm = JSONAccessorManager.fromFS(targetPath);
-                        break;
-                    case 'binary':
-                        acm = BinaryAccessorManager.fromFS(targetPath);
-                        break;
-                    case 'text':
-                        acm = TextAccessorManager.fromFS(targetPath);
-                        break;
-                    case 'custom':
-                        const event = this.customAccessEvents[sa.id];
-                        if (!event) {
-                            throw new StorageError('Invalid access type');
-                        }
-                        const ac = event.create(targetPath, ...sa.args);
-                        acm = CustomAccessorManager.from(ac, sa.id, event);
-                        break;
-                    default:
-                        // 기본 타입 이외에는 custom 타입으로 wrap되기 때문에 이 경우가 발생하지 않음
-                        throw new StorageError('Invalid access type');
-                        break;
-                }
-                this.accessCache[identifier] = sa.accessType !== 'custom' ? sa.accessType : sa.id;
-                this.accessors.set(identifier, acm);
-                return acm;
-            },
-            onAccessDir: (identifier, tree) => {
-                const targetPath = identifier.replaceAll(':', '/');
-                const dirPath = path.join(this.basePath, targetPath);
-
-                const acm = DirectoryAccessorManager.fromFS(dirPath, tree);
-                if (!fs.existsSync(dirPath)) {
-                    fs.mkdirSync(dirPath, { recursive: true });
-                }
-            },
-            onRelease: (identifier) => {
-                const accessor = this.accessors.get(identifier);
-                if (accessor) {
-                    if (!accessor.isDropped()) {
-                        accessor.drop();
-                    }
-                    delete this.accessCache[identifier];
-                    this.accessors.delete(identifier);
-                }
-            },
-            onReleaseDir: (identifier) => {
-                const accessor = this.accessors.get(identifier);
-                if (accessor) {
-                    if (!accessor.isDropped()) {
-                        accessor.drop();
-                    }
-                    delete this.accessCache[identifier];
-                    this.accessors.delete(identifier);
-                }
-            },
-            onChainDependency: (dependentId, dependencyId) => {
-                const dependent = this.accessors.get(dependentId);
-
-                if (dependent) {
-                    dependent.dependent.add(dependencyId);
-                }
+                delete this.accessCache[identifier];
+                this.accessors.delete(identifier);
             }
+        }
+        const onChainDependency = (dependentId:string, dependencyId:string) => {
+            const dependent = this.accessors.get(dependentId);
+
+            if (dependent) {
+                dependent.dependent.add(dependencyId);
+            }
+        }
+        
+        return new StorageAccessControl({
+            onAccess,
+            onAccessDir,
+            onRelease,
+            onReleaseDir,
+            onChainDependency,
         });
+    }
+
+    addListener(event: 'release'|'access'|'release-dir'|'access-dir', listener: Function): void {
+        switch(event) {
+            case 'access':
+                this.eventListeners.access = listener;
+                break;
+            case 'access-dir':
+                this.eventListeners.access_dir = listener;
+                break;
+            case 'release':
+                this.eventListeners.release = listener;
+                break;
+            case 'release-dir':
+                this.eventListeners.release_dir = listener;
+                break;
+        }
     }
 
     register(tree:AccessTree) {
@@ -157,8 +196,8 @@ class ACStorage implements IACStorage {
     getBinaryAccessor(identifier:string):IBinaryAccessor {
         return this.getAccessor(identifier, 'binary') as IBinaryAccessor;
     }
-    getAccessor(identifier:string, accessType:string):IAccessor {
-        return this.accessControl.access(identifier, accessType) as IAccessor;
+    getAccessor(identifier:string, accessType:string):unknown {
+        return this.accessControl.access(identifier, accessType);
     }
 
     copyAccessor(oldIdentifier:string, newIdentifier:string) {
@@ -211,29 +250,19 @@ class ACStorage implements IACStorage {
     }
 
     dropDir(identifier:string) {
-        this.accessControl.validateDirectoryPath(identifier);
-        
-        const child = `${identifier}:`;
-        const childIdentifiers = Array.from(this.accessors.keys()).filter((key)=>key.startsWith(child));
-        childIdentifiers.forEach((id) => this.dropAccessor(id));
+        if (identifier === '') {
+            throw new StorageError('Cannot drop the root directory. use dropAll() instead.');
+        }
         
         this.accessControl.releaseDir(identifier);
     }
 
-    dropAccessor(identifier:string) {
+    drop(identifier:string) {
         this.accessControl.release(identifier);
-        // const acm = this.accessors.get(identifier)
-        // if (acm && !acm.isDropped()) {
-        //     acm.drop();
-        // }
     }
     
-    dropAllAccessor() {
-        this.accessors.forEach((asm) => {
-            if (!asm.isDropped()) {
-                asm.drop();
-            }
-        });
+    dropAll() {
+        this.accessControl.releaseDir('');
     }
 
     commit() {

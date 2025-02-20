@@ -1,5 +1,5 @@
-import { IAccessor, IAccessorManager } from 'features/accessors';
-import StorageAccess, { Accesses } from '../../features/StorageAccess'
+import { IAccessorManager } from 'features/accessors';
+import { Accesses } from '../../features/StorageAccess'
 
 export type AccessTree = {
     [key:string] :AccessTree|Accesses|undefined;
@@ -10,7 +10,7 @@ export type AccessTree = {
 }
 
 export type StorageAccessControlEvent = {
-    onAccess:(identifier:string, accessType:Accesses)=>IAccessorManager<IAccessor>,
+    onAccess:(identifier:string, accessType:Accesses)=>IAccessorManager<unknown>,
     onAccessDir:(identifier:string, tree:AccessTree)=>void,
     onRelease:(identifier:string)=>void,
     onReleaseDir:(identifier:string)=>void,
