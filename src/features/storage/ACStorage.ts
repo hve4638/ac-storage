@@ -72,6 +72,9 @@ class ACStorage implements IACStorage {
             
             let acm:IAccessorManager<unknown>;
             switch(sa.accessType) {
+                case 'directory':
+                    acm = DirectoryAccessorManager.fromFS(targetPath, sa.tree);
+                    break;
                 case 'json':
                     acm = JSONAccessorManager.fromFS(targetPath);
                     break;
@@ -101,23 +104,6 @@ class ACStorage implements IACStorage {
             this.accessors.set(identifier, acm);
             return acm;
         }
-        const onAccessDir = (identifier:string, tree:AccessTree) => {
-            this.eventListeners.access_dir?.(identifier, tree);
-
-            let item = this.accessors.get(identifier);
-            if (item != undefined && !item.isDropped()) {
-                return item;
-            }
-
-            const targetPath = identifier.replaceAll(':', '/');
-            const dirPath = path.join(this.basePath, targetPath);
-
-            const acm = DirectoryAccessorManager.fromFS(dirPath, tree);
-            if (!acm.exists()) acm.create();
-            else acm.load();
-            
-            this.accessors.set(identifier, acm);
-        };
         const onRelease = (identifier:string) => {
             const accessor = this.accessors.get(identifier);
             if (!accessor) return;
@@ -133,18 +119,6 @@ class ACStorage implements IACStorage {
             delete this.accessCache[identifier];
             this.accessors.delete(identifier);
         };
-        const onReleaseDir = (identifier:string) => {
-            this.eventListeners.release_dir?.(identifier);
-            
-            const accessor = this.accessors.get(identifier);
-            if (accessor) {
-                if (!accessor.isDropped()) {
-                    accessor.drop();
-                }
-                delete this.accessCache[identifier];
-                this.accessors.delete(identifier);
-            }
-        }
         const onChainDependency = (dependentId:string, dependencyId:string) => {
             const dependent = this.accessors.get(dependentId);
 
@@ -155,26 +129,18 @@ class ACStorage implements IACStorage {
         
         return new StorageAccessControl({
             onAccess,
-            onAccessDir,
             onRelease,
-            onReleaseDir,
             onChainDependency,
         });
     }
 
-    addListener(event: 'release'|'access'|'release-dir'|'access-dir', listener: Function): void {
+    addListener(event: 'release'|'access', listener: Function): void {
         switch(event) {
             case 'access':
                 this.eventListeners.access = listener;
                 break;
-            case 'access-dir':
-                this.eventListeners.access_dir = listener;
-                break;
             case 'release':
                 this.eventListeners.release = listener;
-                break;
-            case 'release-dir':
-                this.eventListeners.release_dir = listener;
                 break;
         }
     }

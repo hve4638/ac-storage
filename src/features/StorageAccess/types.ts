@@ -1,3 +1,4 @@
+import { type AccessTree } from 'features/StorageAccessControl';
 import { JSONTree } from 'types/json';
 
 export type AccessType = 'nothing' | 'text' | 'binary' | 'json' | 'custom' | 'union' | 'directory';
@@ -20,6 +21,7 @@ export type UnionAccess = {
 }
 export type DirectoryAccess = {
     accessType : 'directory',
+    tree: AccessTree
 }
 
 export type NonUnionAccesses = BasicAccess | JSONAccess | CustomAccess;

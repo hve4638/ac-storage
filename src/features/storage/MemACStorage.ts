@@ -1,4 +1,4 @@
-import { BinaryAccessorManager, IAccessorManager, JSONAccessorManager, TextAccessorManager } from 'features/accessors';
+import { BinaryAccessorManager, CustomAccessorManager, DirectoryAccessorManager, IAccessorManager, JSONAccessorManager, TextAccessorManager } from 'features/accessors';
 import { Accesses } from 'features/StorageAccess';
 import StorageAccessControl from 'features/StorageAccessControl';
 import { StorageError } from './errors';
@@ -10,54 +10,75 @@ class MemACStorage extends ACStorage {
     }
 
     override initAccessControl() {
-        return new StorageAccessControl({
-            onAccess: (identifier:string, sa:Accesses) => {
-                let item = this.accessors.get(identifier);
-                if (item != undefined && !item.isDropped()) {
-                    return item;
-                }
+        const onAccess = (identifier:string, sa:Accesses) => {
+            this.eventListeners.access?.(identifier, sa);
 
-                let acm:IAccessorManager<unknown>;
-                switch(sa.accessType) {
-                    case 'json':
-                        acm = JSONAccessorManager.fromMemory();
-                        break;
-                    case 'binary':
-                        acm = BinaryAccessorManager.fromMemory();
-                        break;
-                    case 'text':
-                        acm = TextAccessorManager.fromMemory();
-                        break;
-                    default:
-                        throw new StorageError('MemStorage does not support custom accessor');
-                }
-                this.accessors.set(identifier, acm);
-                return acm;
-            },
-            onAccessDir: (identifier) => {
-                
-            },
-            onRelease: (identifier) => {
-                const accessor = this.accessors.get(identifier);
-                if (accessor) {
-                    if (!accessor.isDropped()) {
-                        accessor.drop();
+            let item = this.accessors.get(identifier);
+            if (item != undefined && !item.isDropped()) {
+                return item;
+            }
+            
+            let acm:IAccessorManager<unknown>;
+            switch(sa.accessType) {
+                case 'directory':
+                    acm = DirectoryAccessorManager.fromMemory(sa.tree);
+                    break;
+                case 'json':
+                    acm = JSONAccessorManager.fromMemory();
+                    break;
+                case 'binary':
+                    acm = BinaryAccessorManager.fromMemory();
+                    break;
+                case 'text':
+                    acm = TextAccessorManager.fromMemory();
+                    break;
+                case 'custom':
+                    const event = this.customAccessEvents[sa.id];
+                    if (!event) {
+                        throw new StorageError('Invalid access type');
                     }
-                    this.accessors.delete(identifier);
-                }
-            },
-            onReleaseDir: (identifier) => {
-                const childPrefix = `${identifier}:`;
-                const childIds = Array.from(this.accessors.keys()).filter((key)=>key.startsWith(childPrefix));
-                childIds.forEach((id) => this.accessors.delete(id));
-            },
-            onChainDependency: (dependentId, dependencyId) => {
-                const dependent = this.accessors.get(dependentId);
+                    const ac = event.create(null as any, ...sa.args);
+                    acm = CustomAccessorManager.from(ac, sa.id, event);
+                    break;
+                default:
+                    // 기본 타입 이외에는 custom 타입으로 wrap되기 때문에 이 경우가 발생하지 않음
+                    throw new StorageError('Invalid access type');
+                    break;
+            }
+            if (!acm.exists()) acm.create();
+            else acm.load();
+            
+            this.accessCache[identifier] = sa.accessType !== 'custom' ? sa.accessType : sa.id;
+            this.accessors.set(identifier, acm);
+            return acm;
+        }
+        const onRelease = (identifier:string) => {
+            const accessor = this.accessors.get(identifier);
+            if (!accessor) return;
 
-                if (dependent) {
-                    dependent.dependent.add(dependencyId);
-                }
-            },
+            for (const child of accessor.dependent) {
+                onRelease(child);
+            }
+            if (identifier === '') return;
+            this.eventListeners.release?.(identifier);
+
+            if (!accessor.isDropped()) accessor.drop();
+
+            delete this.accessCache[identifier];
+            this.accessors.delete(identifier);
+        };
+        const onChainDependency = (dependentId:string, dependencyId:string) => {
+            const dependent = this.accessors.get(dependentId);
+
+            if (dependent) {
+                dependent.dependent.add(dependencyId);
+            }
+        };
+
+        return new StorageAccessControl({
+            onAccess,
+            onRelease,
+            onChainDependency,
         });
     }
 }

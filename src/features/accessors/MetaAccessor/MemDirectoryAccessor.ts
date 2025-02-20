@@ -11,6 +11,8 @@ class MemDirectoryAccessor implements IDirectoryAccessor {
     exists(): boolean {
         return true;    
     }
+    copy(other:MemDirectoryAccessor) {}
+    move(other:MemDirectoryAccessor) {}
     drop() {}
 }
 

@@ -10,11 +10,7 @@ describe('StorageAccessControl Test', () => {
                 accesses.push(identifier);
                 return {} as any;
             },
-            onAccessDir: (identifier) => {
-                accesses.push(identifier);
-            },
             onRelease: (identifier) => {},
-            onReleaseDir: (identifier) => {},
             onChainDependency: (idDependBy, idDependTo) => {}
         });
 
@@ -46,11 +42,7 @@ describe('StorageAccessControl Test', () => {
                 accesses.push(identifier);
                 return {} as any;
             },
-            onAccessDir: (identifier, tree) => {
-                accessesDir.push([identifier, tree]);
-            },
             onRelease: (identifier) => {},
-            onReleaseDir: (identifier) => {},
             onChainDependency(idDependBy, idDependTo) {},
         });
 
@@ -67,16 +59,15 @@ describe('StorageAccessControl Test', () => {
         ac.register(fullTree);
         
         ac.access('base:config.json', 'json');
-        expect(accesses).toEqual([ 'base:config.json' ]);
-        expect(accessesDir).toEqual([ ['base', fullTree['base']] ]);
+        expect(accesses).toEqual([ 'base', 'base:config.json' ]);
         
         accesses.length = 0;
         accessesDir.length = 0;
         ac.access('layer1:layer2:data.txt', 'text');
-        expect(accesses).toEqual([ 'layer1:layer2:data.txt' ]);
-        expect(accessesDir).toEqual([
-            ['layer1', fullTree['layer1']],
-            ['layer1:layer2', fullTree['layer1']['layer2']],
+        expect(accesses).toEqual([
+            'layer1',
+            'layer1:layer2',
+            'layer1:layer2:data.txt'
         ]);
         
         expect(()=>ac.access('base', 'text')).toThrow(DirectoryAccessError);
@@ -89,9 +80,7 @@ describe('StorageAccessControl Test', () => {
         const dependency:{from:string, to:string}[] = [];
         const ac = new StorageAccessControl({
             onAccess: (identifier, accessType) => { return {} as any;},
-            onAccessDir: (identifier, tree) => {},
             onRelease: (identifier) => {},
-            onReleaseDir: (identifier) => {},
             onChainDependency(idDependBy, idDependTo) {
                 dependency.push({from:idDependBy, to:idDependTo});
             },

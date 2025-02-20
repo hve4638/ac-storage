@@ -38,7 +38,7 @@ class DirectoryAccessorManager implements IAccessorManager<IDirectoryAccessor> {
         return newAC;
     }
     copy(ac:IAccessorManager<DirectoryAccessor>) {
-
+        this.accessor.copy(ac.accessor);
     }
 
     isCompatible(other:IAccessorManager<unknown>):other is DirectoryAccessorManager {

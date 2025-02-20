@@ -61,7 +61,7 @@ class JSONAccessor implements IJSONAccessor {
     protected existsFile() {
         if (!fs.existsSync(this.#filePath)) return false;
 
-        return fs.statSync(this.#filePath).isDirectory();
+        return fs.statSync(this.#filePath).isFile();
     }
 
     get jsonStructure() {

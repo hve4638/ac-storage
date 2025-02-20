@@ -39,6 +39,7 @@ describe('ACStorage FS Test', () => {
     }
     
     beforeAll(() => {
+        fs.rmSync(testDirectory, { recursive: true, force: true });
     });
     beforeEach(() => {
         fs.mkdirSync(testDirectory, { recursive: true });
@@ -240,6 +241,80 @@ describe('ACStorage FS Test', () => {
 
         // 4. 내용 확인
         const nextAC = storage.getJSONAccessor('next.json');
+        expect(nextAC.getAll()).toEqual({ value : 1 });
+    });
+    
+    test('디렉토리 이동', ()=>{
+        const prevPath = getPath('prev/index.json');
+        const nextPath = getPath('next/index.json');
+        
+        // 0. 초기 상태
+        expect(isFile(prevPath)).toBeFalsy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 1. 저장소 등록
+        storage.register({
+            'prev' : {
+                '*' : StorageAccess.JSON({ value : JSONType.number }),
+            },
+            'next' : {
+                '*' : StorageAccess.JSON({ value : JSONType.number }),
+            },
+        });
+        
+        // 2. 저장소 생성
+        let prev = storage.getJSONAccessor('prev:index.json');
+        prev.setOne('value', 1);
+        storage.commit();
+
+        expect(isFile(prevPath)).toBeTruthy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 3. 새 저장소 생성 및 이동
+        storage.moveAccessor('prev', 'next');
+
+        expect(isFile(prevPath)).toBeFalsy();
+        expect(isFile(nextPath)).toBeTruthy();
+
+        // 4. 내용 확인
+        const nextAC = storage.getJSONAccessor('next:index.json');
+        expect(nextAC.getAll()).toEqual({ value : 1 });
+    });
+    
+    test('디렉토리 복사', ()=>{
+        const prevPath = getPath('prev/index.json');
+        const nextPath = getPath('next/index.json');
+        
+        // 0. 초기 상태
+        expect(isFile(prevPath)).toBeFalsy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 1. 저장소 등록
+        storage.register({
+            'prev' : {
+                '*' : StorageAccess.JSON({ value : JSONType.number }),
+            },
+            'next' : {
+                '*' : StorageAccess.JSON({ value : JSONType.number }),
+            },
+        });
+        
+        // 2. 저장소 생성
+        let prev = storage.getJSONAccessor('prev:index.json');
+        prev.setOne('value', 1);
+        storage.commit();
+
+        expect(isFile(prevPath)).toBeTruthy();
+        expect(isFile(nextPath)).toBeFalsy();
+
+        // 3. 새 저장소 생성 및 복사
+        storage.copyAccessor('prev', 'next');
+
+        expect(isFile(prevPath)).toBeTruthy();
+        expect(isFile(nextPath)).toBeTruthy();
+
+        // 4. 내용 확인
+        const nextAC = storage.getJSONAccessor('next:index.json');
         expect(nextAC.getAll()).toEqual({ value : 1 });
     });
 });
