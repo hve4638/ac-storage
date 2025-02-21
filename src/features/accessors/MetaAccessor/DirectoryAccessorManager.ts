@@ -1,3 +1,5 @@
+import deepEqual from 'fast-deep-equal';
+
 import { IAccessorManager, IBinaryAccessor } from '../types';
 import DirectoryAccessor from './DirectoryAccessor';
 import MemDirectoryAccessor from './MemDirectoryAccessor';
@@ -42,7 +44,9 @@ class DirectoryAccessorManager implements IAccessorManager<IDirectoryAccessor> {
     }
 
     isCompatible(other:IAccessorManager<unknown>):other is DirectoryAccessorManager {
-        return other instanceof DirectoryAccessorManager;
+        if (!(other instanceof DirectoryAccessorManager)) return false;
+        
+        return deepEqual(this.tree, other.tree);
     }
     
     drop() {

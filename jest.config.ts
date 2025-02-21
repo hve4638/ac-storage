@@ -14,5 +14,7 @@ module.exports = {
         '^data/(.*)$': '<rootDir>/src/data/$1',
         '^errors/(.*)$': '<rootDir>/src/errors/$1',
         '^errors$': '<rootDir>/src/errors/index',
+        '^utils$': '<rootDir>/src/utils/index',
+        '^utils/(.*)$': '<rootDir>/src/utils/$1',
     },
 };

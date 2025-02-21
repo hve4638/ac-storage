@@ -4,7 +4,7 @@ import TreeExplorer from 'features/TreeExplorer';
 
 import { AccessTree, StorageAccessControlEvent } from './types';
 
-import { AccessDeniedError, DirectoryAccessError, NotRegisterError, StorageAccessError } from './errors';
+import { AccessDeniedError, DirectoryAccessError, NotRegisterError, StorageAccessError, UncompatibleAccessorError } from './errors';
 
 class StorageAccessControl {
     #events:StorageAccessControlEvent;
@@ -25,12 +25,20 @@ class StorageAccessControl {
         const oldACM = this.#getAccessorManager(oldIdentifier, accessType, true);
         const newACM = this.#getAccessorManager(newIdentifier, accessType, true);
 
+        if (!newACM.isCompatible(oldACM)) {
+            throw new UncompatibleAccessorError(`'${oldIdentifier}' and '${newIdentifier}' are not compatible.`);
+        }
+        
         oldACM.copy(newACM);
     }
 
     move(oldIdentifier:string, newIdentifier:string, accessType:string) {
         const oldACM = this.#getAccessorManager(oldIdentifier, accessType, true);
         const newACM = this.#getAccessorManager(newIdentifier, accessType, true);
+
+        if (!newACM.isCompatible(oldACM)) {
+            throw new UncompatibleAccessorError(`'${oldIdentifier}' and '${newIdentifier}' are not compatible.`);
+        }
         
         oldACM.move(newACM);
     }

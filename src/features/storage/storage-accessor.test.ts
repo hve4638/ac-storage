@@ -6,7 +6,7 @@ import { type IACStorage, MemACStorage } from 'features/storage';
 import StorageAccess from 'features/StorageAccess';
 
 /**
- * 각 Accessor에 대한 테스트
+ * 기본 Accessor에 대한 테스트
  * ACStorage로 부터 Accessor를 가져와서 사용하는 테스트
  * 
  * Accessor 각각에 대한 자세한 테스트는 accessors 테스트로 따로 진행

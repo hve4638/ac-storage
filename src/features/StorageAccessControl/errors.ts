@@ -27,3 +27,10 @@ export class DirectoryAccessError extends StorageError {
         this.name = 'DirectoryAccessError';
     }
 }
+
+export class UncompatibleAccessorError extends StorageError {
+    constructor(message:string) {
+        super(message);
+        this.name = 'UncompatibleError';
+    }
+}

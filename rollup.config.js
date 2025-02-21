@@ -46,7 +46,9 @@ export default [
                       "types/*": ["src/types/*"],
                       "errors": ["src/errors/index"],
                       "features/*": ["src/features/*"],
-                      "data/*": ["src/data/*"]
+                      "data/*": ["src/data/*"],
+                      "utils": ["src/utils/index"],
+                      "utils/*": ["src/uitls/*"]
                     }
                 },
             }),

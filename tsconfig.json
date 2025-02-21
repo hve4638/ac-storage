@@ -33,6 +33,8 @@
           "types/*": ["src/types/*"],
           "features/*": ["src/features/*"],
           "data/*": ["src/data/*"],
+          "utils": ["src/utils/index"],
+          "utils/*": ["src/utils/*"],
         }
     },
     "include": [
