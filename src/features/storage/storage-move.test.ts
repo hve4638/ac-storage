@@ -6,6 +6,11 @@ import { ACStorage } from 'features/storage';
 import StorageAccess from 'features/StorageAccess';
 import { JSONType } from 'types/json';
 
+type AC = [string, string];
+type COPY_OR_MOVE_TEST_STRUCT = {
+    before : AC[],
+    copy: [string, string],
+}
 
 // ACStorage가 파일시스템과 연동되는지 테스트
 describe('ACStorage Accessor 복사/이동 테스트', () => {
@@ -25,14 +30,37 @@ describe('ACStorage Accessor 복사/이동 테스트', () => {
         'text2' : {
             '*' : StorageAccess.Text(),
         },
+        '*' : {
+            'index.json' : StorageAccess.JSON({ value : JSONType.number }),
+        }
     }
-    const passTestcases = [
-        ['json', 'json1:index.json', 'json2:index.json'],
-        ['json', 'json1:item1.json', 'json2:item2.json'],
-        ['text', 'text1:item1.txt', 'text2:item2.txt'],
+    const passTestcases:COPY_OR_MOVE_TEST_STRUCT[] = [
+        {
+            before : [['json1:index.json', 'json']],
+            copy : ['json1:index.json', 'json2:index.json'],
+        },
+        {
+            before : [['json1:item1.json', 'json']],
+            copy : ['json1:item1.json', 'json2:item2.json'],
+        },
+        {
+            before : [['text1:item1.txt', 'text']],
+            copy : ['text1:item1.txt', 'text2:item2.txt'],
+        },
+        {
+            before : [['text1:item1.txt', 'text']],
+            copy : ['text1:item1.txt', 'text2:item2.txt'],
+        },
+        {
+            before : [['dir1:index.json', 'json']],
+            copy : ['dir1', 'dir2'],
+        },
     ];
-    const failTestcases = [
-        ['json', 'json1:index.json', 'text1:index.txt'],
+    const failTestcases:COPY_OR_MOVE_TEST_STRUCT[] = [
+        {
+            before : [['json1:index.json', 'json']],
+            copy : ['json1:index.json', 'text1:index.txt'],
+        },
     ];
     
     beforeAll(() => {
@@ -48,17 +76,21 @@ describe('ACStorage Accessor 복사/이동 테스트', () => {
         storage.dropAll();
     });
 
-    for (const [ac, oldIdentifier, newIdentifier] of passTestcases) {
-        test(`copy (${oldIdentifier} -> ${newIdentifier})`, () => {
-            storage.getAccessor(oldIdentifier, ac);
-            storage.copyAccessor(oldIdentifier, newIdentifier);
+    for (const { before, copy } of passTestcases) {
+        test(`copy (${copy[0]} -> ${copy[1]})`, () => {
+            for(const [identifier, ac] of before) {
+                storage.getAccessor(identifier, ac);
+            }
+            storage.copyAccessor(copy[0], copy[1]);
         });
     }
 
-    for (const [ac, oldIdentifier, newIdentifier] of failTestcases) {
-        test(`copy (${oldIdentifier} -> ${newIdentifier})`, () => {
-            storage.getAccessor(oldIdentifier, ac);
-            expect(() => storage.copyAccessor(oldIdentifier, newIdentifier)).toThrow();
+    for (const { before, copy } of failTestcases) {
+        test(`copy (${copy[0]} -> ${copy[1]})`, () => {
+            for(const [identifier, ac] of before) {
+                storage.getAccessor(identifier, ac);
+            }
+            expect(() => storage.copyAccessor(copy[0], copy[1])).toThrow();
         });
     }
 });

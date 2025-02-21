@@ -77,7 +77,7 @@ class StorageAccessControl {
         let subtree = this.#rawTree;
         for (let i = 0; i < length-1; i++) {
             addAcc(splited[i]);
-            subtree = subtree[splited[i]] as AccessTree;
+            subtree = subtree[walked.path[i]] as AccessTree;
             
             this.#events.onAccess(acc, {
                 accessType : 'directory',
