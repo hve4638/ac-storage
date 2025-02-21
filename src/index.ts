@@ -1,7 +1,8 @@
 export type {
     IBinaryAccessor,
     IJSONAccessor,
-    ITextAccessor
+    ITextAccessor,
+    ICustomAccessor,
 } from 'features/accessors';
 export {
     default as StorageAccessControl,
