@@ -1,6 +1,22 @@
 export type AccessorEvent<AC={}> = {
-    create: (actualPath:string, ...args:any[])=>AC;
+    init: (actualPath:string, ...args:any[])=>AC;
     
+    /**
+     * 신규 파일 생성 시 호출
+     */
+    create: (ac:AC, actualPath:string, ...args:any[])=>void;
+    
+    /**
+     * 파일이 존재한다면 create() 대신 호출됨
+     */
+    load: (ac:AC, actualPath:string, ...args:any[])=>void;
+
+    store: (ac:AC, actualPath:string, ...args:any[])=>void;
+
+    exists: (ac:AC, actualPath:string, ...args:any[])=>boolean;
+
+    destroy: (ac:AC, actualPath:string, ...args:any[])=>void;
+
     copy? : (prevAC:AC, nextAC:AC)=>void;
     /**
      * Optional

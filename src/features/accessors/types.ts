@@ -10,9 +10,7 @@ export interface IAccessorManager<AC=unknown> {
     exists():boolean;
     move(newACM:IAccessorManager<AC>):void;
     copy(newACM:IAccessorManager<AC>):void;
-
     isCompatible(other:IAccessorManager):boolean;
-
     drop():void;
     commit():void;
     isDropped():boolean;

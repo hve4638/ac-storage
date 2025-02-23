@@ -3,37 +3,53 @@ import { IAccessorManager } from '../types';
 import { AccessorManagerError } from 'errors';
 import { ICustomAccessor } from './types';
 
-class CustomAccessorManager<AC extends ICustomAccessor> implements IAccessorManager<AC> {
+type CustomAccessorArgs<AC> = {
+    customId:string;
+    event:AccessorEvent<AC>;
+    actualPath:string;
+    customArgs:any[];
+}
+
+class CustomAccessorManager<AC> implements IAccessorManager<AC> {
     #customId:string;
-    accessor : AC;
+    #customArgs:any[];
+    #accessor : AC|null;
+    #actualPath : string;
     dependent = new Set<string>();
     dependency = new Set<string>();
 
-    #event:Omit<AccessorEvent<AC>, 'create'>;
+    #event:Omit<AccessorEvent<AC>, 'init'>;
     
-    static from<AC extends ICustomAccessor>(ac:AC, customId:string, event:AccessorEvent<AC>) {
-        return new CustomAccessorManager<AC>(ac, customId, event);
+    static from<AC>(ac:AC, args:CustomAccessorArgs<AC>) {
+        return new CustomAccessorManager<AC>(ac, args);
     }
 
-    private constructor(ac:AC, customId:string, event:AccessorEvent<AC>) {
-        this.accessor = ac;
+    private constructor(ac:AC, args:CustomAccessorArgs<AC>) {
+        const { customId, event, actualPath, customArgs } = args;
+        this.#accessor = ac;
         this.#customId = customId;
+        this.#customArgs = customArgs;
+        this.#actualPath = actualPath;
         this.#event = event;
     }
 
-    create() {
-        if (this.accessor.createData) this.accessor.createData();
+    get accessor() {
+        if (!this.#accessor) {
+            throw new AccessorManagerError('Accessor is dropped');
+        }
+
+        return this.#accessor;
     }
+
+    create() {
+        this.#event.create(this.accessor, this.#actualPath, ...this.#customArgs);
+    }
+
     load() {
-        if (this.accessor.loadData) this.accessor.loadData();
+        this.#event.load(this.accessor, this.#actualPath, ...this.#customArgs);
     }
     exists() {
-        if (this.accessor.hasExistingData) {
-            return this.accessor.hasExistingData();
-        }
-        else {
-            return false;
-        }
+        return this.#event.exists(this.accessor, this.#actualPath, ...this.#customArgs);
     }
 
     move(ac:IAccessorManager<AC>) {
@@ -74,13 +90,15 @@ class CustomAccessorManager<AC extends ICustomAccessor> implements IAccessorMana
     }
     
     drop() {
-        this.accessor.drop();
+        this.#event.destroy(this.accessor, this.#actualPath, ...this.#customArgs);
+
+        this.#accessor = null;
     }
     commit() {
-        this.accessor.commit();
+        this.#event.store(this.accessor, this.#actualPath, ...this.#customArgs);
     }
     isDropped() {
-        return this.accessor.isDropped();
+        return this.#accessor == null;
     }
 }
 

@@ -33,7 +33,7 @@ class ACStorage implements IACStorage {
     protected cacheName:string;
     
     protected basePath: string;
-    protected customAccessEvents: Record<string, AccessorEvent<ICustomAccessor>> = {};
+    protected customAccessEvents: Record<string, AccessorEvent<unknown>> = {};
     protected accessors:Map<string, IAccessorManager<unknown>> = new Map();
 
     protected accessControl:StorageAccessControl;
@@ -99,8 +99,13 @@ class ACStorage implements IACStorage {
                     if (!event) {
                         throw new StorageError('Invalid access type');
                     }
-                    const ac = event.create(targetPath, ...sa.args);
-                    acm = CustomAccessorManager.from(ac, sa.id, event);
+                    const ac = event.init(targetPath, ...sa.args);
+                    acm = CustomAccessorManager.from(ac, {
+                        customId: sa.id,
+                        event,
+                        actualPath: targetPath,
+                        customArgs: sa.args,
+                    });
                     break;
                 default:
                     // 기본 타입 이외에는 custom 타입으로 wrap되기 때문에 이 경우가 발생하지 않음
@@ -159,7 +164,7 @@ class ACStorage implements IACStorage {
         this.accessControl.register(tree);
     }
 
-    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<ICustomAccessor>) {
+    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<unknown>) {
         this.customAccessEvents[customId] = event;
     }
 
@@ -172,25 +177,61 @@ class ACStorage implements IACStorage {
         return new ACSubStorage(this, identifier);
     }
 
-    getJSONAccessor(identifier:string):IJSONAccessor {
-        return this.getAccessor(identifier, 'json') as IJSONAccessor;
+    access(identifier:string, accessType:string):unknown {
+        return this.accessControl.access(identifier, accessType);
     }
-    getTextAccessor(identifier:string):ITextAccessor {
-        return this.getAccessor(identifier, 'text') as ITextAccessor;
+    accessAsJSON(identifier:string):IJSONAccessor {
+        return this.access(identifier, 'json') as IJSONAccessor;
     }
-    getBinaryAccessor(identifier:string):IBinaryAccessor {
-        return this.getAccessor(identifier, 'binary') as IBinaryAccessor;
+    accessAsText(identifier:string):ITextAccessor {
+        return this.access(identifier, 'text') as ITextAccessor;
     }
+    accessAsBinary(identifier:string):IBinaryAccessor {
+        return this.access(identifier, 'binary') as IBinaryAccessor;
+    }
+    copy(oldIdentifier:string, newIdentifier:string) {
+        const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
+
+        this.accessControl.copy(oldIdentifier, newIdentifier, accessType);
+    }
+    move(oldIdentifier:string, newIdentifier:string) {
+        const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
+        
+        this.accessControl.move(oldIdentifier, newIdentifier, accessType);
+    }
+
+    /**
+     * @deprecated use access() instead
+     */
     getAccessor(identifier:string, accessType:string):unknown {
         return this.accessControl.access(identifier, accessType);
     }
-
+    /**
+     * @deprecated use accessAsJSON() instead
+     */
+    getJSONAccessor(identifier:string):IJSONAccessor {
+        return this.getAccessor(identifier, 'json') as IJSONAccessor;
+    }
+    /**
+     * @deprecated use accessAsText() instead
+     */
+    getTextAccessor(identifier:string):ITextAccessor {
+        return this.getAccessor(identifier, 'text') as ITextAccessor;
+    }
+    /**
+     * @deprecated use accessAsBinary() instead
+     */
+    getBinaryAccessor(identifier:string):IBinaryAccessor {
+        return this.getAccessor(identifier, 'binary') as IBinaryAccessor;
+    }
+    /**
+     * @deprecated use copy() instead
+     */
     copyAccessor(oldIdentifier:string, newIdentifier:string) {
         const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
 
         this.accessControl.copy(oldIdentifier, newIdentifier, accessType);
     }
-
     moveAccessor(oldIdentifier:string, newIdentifier:string) {
         const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
         
