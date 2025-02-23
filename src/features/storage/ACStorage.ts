@@ -15,6 +15,11 @@ import ACSubStorage from './ACSubStorage';
 import { StorageError } from './errors';
 import { IACStorage, IACSubStorage } from './types';
 
+interface ACStorageOption {
+    cacheName?:string;
+    noCache?:boolean;
+}
+
 class ACStorage implements IACStorage {
     protected eventListeners:{
         access?: Function,
@@ -25,7 +30,8 @@ class ACStorage implements IACStorage {
 
     protected cachePath:string;
     protected noCache:boolean;
-
+    protected cacheName:string;
+    
     protected basePath: string;
     protected customAccessEvents: Record<string, AccessorEvent<ICustomAccessor>> = {};
     protected accessors:Map<string, IAccessorManager<unknown>> = new Map();
@@ -33,12 +39,15 @@ class ACStorage implements IACStorage {
     protected accessControl:StorageAccessControl;
     protected accessCache:Record<string, string> = {};
 
-    constructor(basePath:string, noCache:boolean=false) {
+    constructor(basePath:string, option:ACStorageOption={}) {
         this.basePath = basePath;
         this.accessControl = this.initAccessControl();
-        this.cachePath = path.join(this.basePath, '.acstorage');
-        this.noCache = noCache;
+        
+        this.noCache = option.noCache ?? false;
+        this.cacheName = option.cacheName ?? '.acstorage';
 
+        this.cachePath = path.join(this.basePath, '.acstorage');
+        
         this.accessors.set('', RootAccessorManager.fromFS());
 
         if (!this.noCache) this.loadCache();
