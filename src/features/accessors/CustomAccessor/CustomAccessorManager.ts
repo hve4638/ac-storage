@@ -42,14 +42,19 @@ class CustomAccessorManager<AC> implements IAccessorManager<AC> {
     }
 
     create() {
-        this.#event.create(this.accessor, this.#actualPath, ...this.#customArgs);
+        if (this.#event.create) this.#event.create(this.accessor, this.#actualPath, ...this.#customArgs);
     }
 
     load() {
-        this.#event.load(this.accessor, this.#actualPath, ...this.#customArgs);
+        if (this.#event.load) this.#event.load(this.accessor, this.#actualPath, ...this.#customArgs);
     }
     exists() {
-        return this.#event.exists(this.accessor, this.#actualPath, ...this.#customArgs);
+        if (this.#event.exists) {
+            return this.#event.exists(this.accessor, this.#actualPath, ...this.#customArgs);
+        }
+        else {
+            return false;
+        }
     }
 
     move(ac:IAccessorManager<AC>) {
@@ -90,12 +95,13 @@ class CustomAccessorManager<AC> implements IAccessorManager<AC> {
     }
     
     drop() {
-        this.#event.destroy(this.accessor, this.#actualPath, ...this.#customArgs);
+        if (this.#accessor == null) return;
+        if (this.#event.destroy) this.#event.destroy(this.accessor, this.#actualPath, ...this.#customArgs);
 
         this.#accessor = null;
     }
     commit() {
-        this.#event.save(this.accessor, this.#actualPath, ...this.#customArgs);
+        if (this.#event.save) this.#event.save(this.accessor, this.#actualPath, ...this.#customArgs);
     }
     isDropped() {
         return this.#accessor == null;
