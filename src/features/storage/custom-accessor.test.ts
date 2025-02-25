@@ -9,7 +9,7 @@ const ACCESS_EVENT_TEMPLATE = {
     init() {},
     create() {},
     load() {},
-    store() {},
+    save() {},
     exists() { return false; },
     move() {},
     copy() {},
@@ -48,8 +48,8 @@ describe('Storage Accessor Test', () => {
             load(ac, path, ...args) {
                 accessLog.push(`array.load`);
             },
-            store() {
-                accessLog.push(`array.load`);
+            save() {
+                accessLog.push(`array.save`);
             },
             exists() {
                 accessLog.push(`array.exists`);
@@ -79,8 +79,8 @@ describe('Storage Accessor Test', () => {
             load(ac, path, ...args) {
                 accessLog.push(`value.load`);
             },
-            store() {
-                accessLog.push(`value.load`);
+            save() {
+                accessLog.push(`value.save`);
             },
             exists() {
                 accessLog.push(`value.exists`);

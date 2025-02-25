@@ -95,7 +95,7 @@ class CustomAccessorManager<AC> implements IAccessorManager<AC> {
         this.#accessor = null;
     }
     commit() {
-        this.#event.store(this.accessor, this.#actualPath, ...this.#customArgs);
+        this.#event.save(this.accessor, this.#actualPath, ...this.#customArgs);
     }
     isDropped() {
         return this.#accessor == null;

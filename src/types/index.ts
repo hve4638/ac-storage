@@ -11,7 +11,7 @@ export type AccessorEvent<AC={}> = {
      */
     load: (ac:AC, actualPath:string, ...args:any[])=>void;
 
-    store: (ac:AC, actualPath:string, ...args:any[])=>void;
+    save: (ac:AC, actualPath:string, ...args:any[])=>void;
 
     exists: (ac:AC, actualPath:string, ...args:any[])=>boolean;
 
