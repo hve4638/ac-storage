@@ -41,12 +41,25 @@ export interface IACStorage {
 export interface IACSubStorage {
     subStorage (prefix:string):IACSubStorage;
 
-    getAccessor(identifier:string, accessType:string):unknown;
-    getJSONAccessor(identifier:string):IJSONAccessor;
-    getTextAccessor(identifier:string):ITextAccessor;
-    getBinaryAccessor(identifier:string):IBinaryAccessor;
+    access(identifier:string, accessType:string):unknown;
+    accessAsJSON(identifier:string):IJSONAccessor;
+    accessAsText(identifier:string):ITextAccessor;
+    accessAsBinary(identifier:string):IBinaryAccessor;
+    copy(oldIdentifier:string, newIdentifier:string):void;
+    move(oldIdentifier:string, newIdentifier:string):void;
 
+    
+    /** @deprecated use access() instead */
+    getAccessor(identifier:string, accessType:string):unknown;
+    /** @deprecated use accessAsJSON() instead */
+    getJSONAccessor(identifier:string):IJSONAccessor;
+    /** @deprecated use accessAsText() instead */
+    getTextAccessor(identifier:string):ITextAccessor;
+    /** @deprecated use accessAsBinary() instead */
+    getBinaryAccessor(identifier:string):IBinaryAccessor;
+    /** @deprecated use copy() instead */
     copyAccessor(oldIdentifier:string, newIdentifier:string):void;
+    /** @deprecated use move() instead */
     moveAccessor(oldIdentifier:string, newIdentifier:string):void;
     
     dropDir(identifier:string):void;
