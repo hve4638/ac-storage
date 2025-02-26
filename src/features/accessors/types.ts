@@ -24,7 +24,7 @@ export interface IJSONAccessor {
 
     set(items:Record<string, any>):string[];
     setOne(key:string, value:any):void;
-    get(keys:string[]):any;
+    get(keys:string[]):Record<string,any>;
     getOne(key:string):any;
     getAll():Record<string, any>;
     remove(keys:string[]):void;

@@ -68,7 +68,7 @@ class JSONAccessor implements IJSONAccessor {
         return this.#tree;
     }
 
-    setOne(key:string, value:any) {
+    setOne(key:string, value:any):void {
         this.#ensureNotDropped();
         
         this.checkAndSetData(key, value);
@@ -91,12 +91,12 @@ class JSONAccessor implements IJSONAccessor {
         }
         return names;
     }
-    getOne(key:string) {
+    getOne(key:string):any {
         this.#ensureNotDropped();
         
         return this.checkAndGetData(key);
     }
-    get(keys:string[]) {
+    get(keys:string[]):Record<string,any> {
         this.#ensureNotDropped();
         
         const result:Record<string,any> = {};
@@ -165,7 +165,9 @@ class JSONAccessor implements IJSONAccessor {
     private checkAndSetData(key:string, value:any) {
         const allowedType = this.checkAndGetKeyType(key);
         const dataType = this.getDataType(value);
-        if ((allowedType & dataType) === 0) {
+
+        // 현재 구현에서 null은 어느 타입으로든 인정됨
+        if (dataType !== JSONType.null && (allowedType & dataType) === 0) {
             throw new AccessorError(`Field '${key}' is not allowed to be set`);
         }
         

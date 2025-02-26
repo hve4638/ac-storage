@@ -164,8 +164,8 @@ class ACStorage implements IACStorage {
         this.accessControl.register(tree);
     }
 
-    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<unknown>) {
-        this.customAccessEvents[customId] = event;
+    addAccessEvent<T extends string, AC>(customId:(T extends AccessType ? never : T), event:AccessorEvent<AC>) {
+        this.customAccessEvents[customId] = event as AccessorEvent<unknown>;
     }
 
     subStorage(identifier:string):IACSubStorage {

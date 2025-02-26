@@ -8,7 +8,7 @@ export interface IACStorage {
     addListener(event:'release'|'access', listener:Function):void;
 
     register(tree:AccessTree):void;
-    addAccessEvent<T extends string>(customId:(T extends AccessType ? never : T), event:AccessorEvent<unknown>):void;
+    addAccessEvent<T extends string, AC>(customId:(T extends AccessType ? never : T), event:AccessorEvent<AC>):void;
     subStorage (prefix:string):IACSubStorage;
     
     access(identifier:string, accessType:string):unknown;
