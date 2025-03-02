@@ -150,8 +150,8 @@ class JSONAccessor implements IJSONAccessor {
             if (this.#explorer && jsonType == null) {
                 throw new AccessorError(`Field '${key}' is not allowed to be set`);
             }
-            else if (jsonType === JSONType.object) {
-                return [[newKey, value]]; // Skip object type
+            else if (jsonType === JSONType.object || jsonType === JSONType.array) {
+                return [[newKey, value]];
             }
             else if (typeof value === 'object' && value !== null) {
                 return this.flattenObject(value, newKey);

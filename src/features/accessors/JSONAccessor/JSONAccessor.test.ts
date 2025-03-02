@@ -162,9 +162,11 @@ describe('JSONAccessor : raw access', () => {
         ['box1.name', 'box1', (raw)=>raw.box1.name],
         ['box1.id', 'id1', (raw)=>raw.box1.id],
         ['box1.no', 1, (raw)=>raw.box1.no],
+        ['box1.list', [1,2,3,4], (raw)=>raw.box1.list],
         ['box1.addition.x', 10, (raw) => raw.box1.addition.x],
         ['box1.addition.y', 20, (raw) => raw.box1.addition.y],
         ['box2.name', 'box2', (raw) => raw.box2.name],
+
         ['box2.id', 'id2', (raw) => raw.box2.id],
         ['box2.no', 2, (raw) => raw.box2.no],
         ['box2.addition.x', 30, (raw) => raw.box2.addition.x],
@@ -177,6 +179,7 @@ describe('JSONAccessor : raw access', () => {
                 name : JSONType.string,
                 id : JSONType.string,
                 no : JSONType.number,
+                list : JSONType.array,
                 addition : {
                     x : JSONType.number,
                     y : JSONType.number,
@@ -190,16 +193,43 @@ describe('JSONAccessor : raw access', () => {
                     x : JSONType.number,
                     y : JSONType.number,
                 }
-            }
+            },
         });
     });
 
     testcases.forEach(([key, value, rawAccess]) => {
         test(`setOne ${key}`, () => {
             accessor.setOne(key, value);
-            expect(accessor.getOne(key)).toBe(value);
-            expect(rawAccess(accessor.getAll())).toBe(value);
+            expect(accessor.getOne(key)).toEqual(value);
+            expect(rawAccess(accessor.getAll())).toEqual(value);
         });
+    });
+
+    test('whole set', () => {
+        const expected = {
+            box1 : {
+                name : 'box1',
+                id : 'id1',
+                no : 1,
+                list : [1,2,3,4],
+                addition : {
+                    x : 10,
+                    y : 20,
+                }
+            },
+            box2 : {
+                name : 'box2',
+                id : 'id2',
+                no : 2,
+                addition : {
+                    x : 30,
+                    y : 40,
+                }
+            }
+        };
+        accessor.set(expected);
+
+        expect(accessor.getAll()).toEqual(expected);
     });
 });
 
