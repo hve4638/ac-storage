@@ -5,6 +5,15 @@ export type {
     ICustomAccessor,
 } from 'features/accessors';
 export {
+    BinaryAccessor,
+    JSONAccessor,
+    TextAccessor,
+    MemBinaryAccessor,
+    MemJSONAccessor,
+    MemTextAccessor,
+} from 'features/accessors';
+
+export {
     default as StorageAccessControl,
     type AccessTree,
     

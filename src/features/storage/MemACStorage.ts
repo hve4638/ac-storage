@@ -6,7 +6,7 @@ import ACStorage from './ACStorage';
 
 class MemACStorage extends ACStorage {
     constructor() {
-        super('');
+        super('', { noCache: true });
     }
 
     override initAccessControl() {

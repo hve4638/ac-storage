@@ -110,13 +110,13 @@ describe('JSONAccessor : multiple R/W', () => {
             }
 
         }
-        const actual = accessor.get([
+        const actual = accessor.get(
             'box1.name',
             'box1.id',
             'box1.no',
             'box1.addition.x',
             'box1.addition.y',
-        ]);
+        );
         expect(actual).toEqual(expected);
     });
     
@@ -144,13 +144,13 @@ describe('JSONAccessor : multiple R/W', () => {
                 }
             }
         }
-        const actual = accessor.get([
+        const actual = accessor.get(
             'box1.name',
             'box1.id',
             'box1.no',
             'box1.addition.x',
             'box1.addition.y',
-        ]);
+        );
         expect(actual).toEqual(expected);
     });
 });

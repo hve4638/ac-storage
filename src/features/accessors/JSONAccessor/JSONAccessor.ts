@@ -8,19 +8,18 @@ import { AccessorError } from '../errors';
 type KeyValueInput = [string, any][] | Record<string, any>;
 
 class JSONAccessor implements IJSONAccessor {
-    #filePath:string;
-    #isDropped:boolean = false;
-
-    #explorer:TreeExplorer|null = null;
-    #contents:{[key:string]:any};
+    protected filePath:string;
+    protected explorer:TreeExplorer|null = null;
+    protected contents:Record<string, any>;
     #tree:JSONTree|null = null;
+    #isDropped:boolean = false;
     
     constructor(filePath:string, tree:JSONTree|null=null) {
-        this.#filePath = filePath;
-        this.#contents = {};
+        this.filePath = filePath;
+        this.contents = {};
         if (tree) {
             this.#tree = tree;
-            this.#explorer = TreeExplorer.from(tree, '.');
+            this.explorer = TreeExplorer.from(tree, '.');
         }
     }
 
@@ -33,35 +32,35 @@ class JSONAccessor implements IJSONAccessor {
     }
     
     protected readFile() {
-        if (fs.existsSync(this.#filePath)) {
-            const contents = fs.readFileSync(this.#filePath, 'utf8');
+        if (fs.existsSync(this.filePath)) {
+            const contents = fs.readFileSync(this.filePath, 'utf8');
             try {
-                this.#contents = JSON.parse(contents);
+                this.contents = JSON.parse(contents);
             }
             catch {
-                this.#contents = {};
+                this.contents = {};
             }
         }
         else {
-            this.#contents = {};
+            this.contents = {};
         }
     }
     protected writeFile() {
-        const jsonString = JSON.stringify(this.#contents, null, 4);
+        const jsonString = JSON.stringify(this.contents, null, 4);
 
-        fs.writeFileSync(this.#filePath, jsonString, 'utf8');
+        fs.writeFileSync(this.filePath, jsonString, 'utf8');
     }
     protected removeFile() {
         try {
-            fs.rmSync(this.#filePath, { force: true });
+            fs.rmSync(this.filePath, { force: true });
         } catch (error) {
-            console.warn(`Failed to remove file ${this.#filePath}:`, error);
+            console.warn(`Failed to remove file ${this.filePath}:`, error);
         }
     }
     protected existsFile() {
-        if (!fs.existsSync(this.#filePath)) return false;
+        if (!fs.existsSync(this.filePath)) return false;
 
-        return fs.statSync(this.#filePath).isFile();
+        return fs.statSync(this.filePath).isFile();
     }
 
     get jsonStructure() {
@@ -96,7 +95,7 @@ class JSONAccessor implements IJSONAccessor {
         
         return this.checkAndGetData(key);
     }
-    get(keys:string[]):Record<string,any> {
+    get(...keys:string[]):Record<string,any> {
         this.#ensureNotDropped();
         
         const result:Record<string,any> = {};
@@ -112,7 +111,7 @@ class JSONAccessor implements IJSONAccessor {
     getAll() {
         this.#ensureNotDropped();
         
-        return JSON.parse(JSON.stringify(this.#contents));
+        return JSON.parse(JSON.stringify(this.contents));
     }
     removeOne(key:string) {
         this.#ensureNotDropped();
@@ -146,14 +145,14 @@ class JSONAccessor implements IJSONAccessor {
         return Object.entries(obj).flatMap(([key, value]) => {
             const newKey = prefix ? `${prefix}.${key}` : key;
             
-            const jsonType = this.#explorer?.get(newKey);
-            if (this.#explorer && jsonType == null) {
+            const jsonType = this.explorer?.get(newKey);
+            if (this.explorer && jsonType == null) {
                 throw new AccessorError(`Field '${key}' is not allowed to be set`);
             }
             else if (jsonType === JSONType.object || jsonType === JSONType.array) {
                 return [[newKey, value]];
             }
-            else if (typeof value === 'object' && value !== null) {
+            else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                 return this.flattenObject(value, newKey);
             }
             else {
@@ -171,7 +170,7 @@ class JSONAccessor implements IJSONAccessor {
             throw new AccessorError(`Field '${key}' is not allowed to be set`);
         }
         
-        const resolved = this.resolveContentsPath(this.#contents, key, true);
+        const resolved = this.resolveContentsPath(this.contents, key, true);
         if (resolved) {
             resolved.ref[resolved.key] = value;
         }
@@ -179,7 +178,7 @@ class JSONAccessor implements IJSONAccessor {
     private checkAndGetData(key:string) {
         this.checkAndGetKeyType(key);
 
-        const resolved = this.resolveContentsPath(this.#contents, key);
+        const resolved = this.resolveContentsPath(this.contents, key);
         if (resolved) {
             return resolved.ref[resolved.key];
         }
@@ -190,13 +189,13 @@ class JSONAccessor implements IJSONAccessor {
     private checkAndRemoveData(key:string) {
         this.checkAndGetKeyType(key);
         
-        const resolved = this.resolveContentsPath(this.#contents, key);
+        const resolved = this.resolveContentsPath(this.contents, key);
         if (resolved) delete resolved.ref[resolved.key];
     }
 
     private checkAndGetKeyType(key:string) {
-        if (this.#explorer) {
-            const result = this.#explorer.get(key);
+        if (this.explorer) {
+            const result = this.explorer.get(key);
             if (result == null) {
                 throw new AccessorError(`Field '${key}' does not exist`);
             }
