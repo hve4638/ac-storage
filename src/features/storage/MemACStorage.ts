@@ -24,7 +24,7 @@ class MemACStorage extends ACStorage {
                     acm = DirectoryAccessorManager.fromMemory(sa.tree);
                     break;
                 case 'json':
-                    acm = JSONAccessorManager.fromMemory();
+                    acm = JSONAccessorManager.fromMemory(sa.structure);
                     break;
                 case 'binary':
                     acm = BinaryAccessorManager.fromMemory();

@@ -2,10 +2,8 @@ import * as fs from 'node:fs';
 import TreeExplorer from '../../../features/TreeExplorer';
 
 import { JSONTree, JSONType } from 'types/json';
-import type { IJSONAccessor } from '../types';
+import type { IJSONAccessor, KeyValueInput } from '../types';
 import { AccessorError } from '../errors';
-
-type KeyValueInput = [string, any][] | Record<string, any>;
 
 class JSONAccessor implements IJSONAccessor {
     protected filePath:string;
@@ -111,7 +109,30 @@ class JSONAccessor implements IJSONAccessor {
     getAll() {
         this.#ensureNotDropped();
         
-        return JSON.parse(JSON.stringify(this.contents));
+        return structuredClone(this.contents);
+    }
+    pushOneToArray(key:string, value:any) {
+        this.#ensureNotDropped();
+
+        this.checkAndPushDataToArray(key, value);
+    }
+    pushToArray(data: KeyValueInput) {
+        this.#ensureNotDropped();
+
+        let setterList:[string, any][] = [];
+        if (Array.isArray(data)) {
+            setterList = data;
+        }
+        else {
+            setterList = this.flattenObject(data);
+        }
+
+        let names:string[] = [];
+        for (const [key, value] of setterList) {
+            names.push(key);
+            this.checkAndPushDataToArray(key, value);
+        }
+        return names;
     }
     removeOne(key:string) {
         this.#ensureNotDropped();
@@ -124,6 +145,21 @@ class JSONAccessor implements IJSONAccessor {
         for (const key of keys) {
             this.checkAndRemoveData(key);
         }
+    }
+
+    existsOne(key:string) {
+        this.#ensureNotDropped();
+        
+        const value = this.checkAndGetData(key);
+        return value !== undefined;
+    }
+    exists(keys:string[]) {
+        this.#ensureNotDropped();
+        
+        return keys.map((key) => {
+            const value = this.checkAndGetData(key);
+            return value !== undefined;
+        });
     }
     
     commit() {
@@ -175,6 +211,21 @@ class JSONAccessor implements IJSONAccessor {
             resolved.ref[resolved.key] = value;
         }
     }
+    private checkAndPushDataToArray(key:string, value:any) {
+        const allowedType = this.checkAndGetKeyType(key);
+
+        if ((allowedType & JSONType.array) === 0) {
+            throw new AccessorError(`Field '${key}' is not allowed to be set`);
+        }
+        
+        const resolved = this.resolveContentsPath(this.contents, key, true);
+        if (resolved) {
+            if (resolved.ref[resolved.key] == undefined) {
+                resolved.ref[resolved.key] = [];
+            }
+            resolved.ref[resolved.key].push(value);
+        }
+    }
     private checkAndGetData(key:string) {
         this.checkAndGetKeyType(key);
 
@@ -222,6 +273,14 @@ class JSONAccessor implements IJSONAccessor {
                 return JSONType.null;
         }
     }
+    /**
+     * 중첩된 객체의 경로를 찾아, 마지막 객체와 키를 반환
+     * 
+     * @param contents 객체
+     * @param target "."로 구분되는 경로 문자열. 예) "layer1.layer2.item"
+     * @param createIfMissing 경로 중간에 객체가 없을 경우, 생성할지 여부. false인 경우 undefined 반환
+     * @returns 
+     */
     private resolveContentsPath(contents:Record<string,any>, target:string, createIfMissing:boolean=false) {
         const keys = target.split('.');
 

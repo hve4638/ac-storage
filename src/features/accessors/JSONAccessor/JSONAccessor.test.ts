@@ -108,7 +108,6 @@ describe('JSONAccessor : multiple R/W', () => {
                     y : 20,
                 }
             }
-
         }
         const actual = accessor.get(
             'box1.name',
@@ -233,7 +232,7 @@ describe('JSONAccessor : raw access', () => {
     });
 });
 
-describe('JSONAccessor : x', () => {
+describe('JSONAccessor : object access', () => {
     let accessor:MemJSONAccessor;
     
     beforeEach(() => {
@@ -285,3 +284,4 @@ describe('JSONAccessor : x', () => {
         );
     });
 });
+

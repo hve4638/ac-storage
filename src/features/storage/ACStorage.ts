@@ -86,7 +86,7 @@ class ACStorage implements IACStorage {
                     acm = DirectoryAccessorManager.fromFS(targetPath, sa.tree);
                     break;
                 case 'json':
-                    acm = JSONAccessorManager.fromFS(targetPath);
+                    acm = JSONAccessorManager.fromFS(targetPath, sa.structure);
                     break;
                 case 'binary':
                     acm = BinaryAccessorManager.fromFS(targetPath);

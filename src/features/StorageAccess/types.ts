@@ -8,7 +8,7 @@ export type BasicAccess = {
 };
 export type JSONAccess = {
     accessType : 'json',
-    structure : JSONTree|null
+    structure? : JSONTree
 }
 export type CustomAccess = {
     accessType : 'custom',

@@ -5,7 +5,7 @@ class StorageAccess {
     static Nothing():Accesses { return {accessType : 'nothing'} };
     static Text():Accesses { return {accessType : 'text'} };
     static Binary():Accesses { return {accessType : 'binary'} };
-    static JSON(structure:JSONTree|null=null):Accesses {
+    static JSON(structure?:JSONTree):Accesses {
         return { accessType : 'json', structure };
     };
     static Custom(id:string, ...args:any[]):Accesses {
