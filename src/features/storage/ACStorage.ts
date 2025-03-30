@@ -4,8 +4,8 @@ import { AccessorEvent } from 'types';
 
 import { IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager, CustomAccessorManager, ICustomAccessor } from 'features/accessors';
 import StorageAccessControl, { AccessTree } from 'features/StorageAccessControl';
-import StorageAccess, { Accesses, AccessType } from 'features/StorageAccess';
-import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from 'features/accessors/types';
+import { Accesses, AccessType } from 'features/StorageAccess';
+import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from '@/features/accessors';
 import {
     DirectoryAccessorManager,
     RootAccessorManager,
@@ -71,7 +71,7 @@ class ACStorage implements IACStorage {
     }
 
     protected initAccessControl():StorageAccessControl {
-        const onAccess = (identifier:string, sa:Accesses) => {
+        const onAccess = async (identifier:string, sa:Accesses) => {
             const targetPath = path.join(this.basePath, identifier.replaceAll(':', '/'));
             this.eventListeners.access?.(identifier, sa);
 
@@ -112,24 +112,24 @@ class ACStorage implements IACStorage {
                     throw new StorageError('Invalid access type');
                     break;
             }
-            if (!acm.exists()) acm.create();
-            else acm.load();
+            if (!await acm.exists()) await acm.create();
+            else await acm.load();
             
             this.accessCache[identifier] = sa.accessType !== 'custom' ? sa.accessType : sa.id;
             this.accessors.set(identifier, acm);
             return acm;
         }
-        const onRelease = (identifier:string) => {
+        const onRelease = async (identifier:string) => {
             const accessor = this.accessors.get(identifier);
             if (!accessor) return;
 
             for (const child of accessor.dependent) {
-                onRelease(child);
+                await onRelease(child);
             }
             if (identifier === '') return;
             this.eventListeners.release?.(identifier);
 
-            if (!accessor.isDropped()) accessor.drop();
+            if (!accessor.isDropped()) await accessor.drop();
 
             delete this.accessCache[identifier];
             this.accessors.delete(identifier);
@@ -177,65 +177,29 @@ class ACStorage implements IACStorage {
         return new ACSubStorage(this, identifier);
     }
 
-    access(identifier:string, accessType:string):unknown {
-        return this.accessControl.access(identifier, accessType);
+    async access(identifier:string, accessType:string):Promise<unknown> {
+        return await this.accessControl.access(identifier, accessType);
     }
-    accessAsJSON(identifier:string):IJSONAccessor {
-        return this.access(identifier, 'json') as IJSONAccessor;
+    async accessAsJSON(identifier:string):Promise<IJSONAccessor> {
+        return await this.access(identifier, 'json') as IJSONAccessor;
     }
-    accessAsText(identifier:string):ITextAccessor {
-        return this.access(identifier, 'text') as ITextAccessor;
+    async accessAsText(identifier:string):Promise<ITextAccessor> {
+        return await this.access(identifier, 'text') as ITextAccessor;
     }
-    accessAsBinary(identifier:string):IBinaryAccessor {
-        return this.access(identifier, 'binary') as IBinaryAccessor;
+    async accessAsBinary(identifier:string):Promise<IBinaryAccessor> {
+        return await this.access(identifier, 'binary') as IBinaryAccessor;
     }
-    copy(oldIdentifier:string, newIdentifier:string) {
+    async copy(oldIdentifier:string, newIdentifier:string) {
         const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
+        await this.commit(oldIdentifier);
 
-        this.accessControl.copy(oldIdentifier, newIdentifier, accessType);
+        await this.accessControl.copy(oldIdentifier, newIdentifier, accessType);
     }
-    move(oldIdentifier:string, newIdentifier:string) {
+    async move(oldIdentifier:string, newIdentifier:string) {
         const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
+        await this.commit(oldIdentifier);
         
-        this.accessControl.move(oldIdentifier, newIdentifier, accessType);
-    }
-
-    /**
-     * @deprecated use access() instead
-     */
-    getAccessor(identifier:string, accessType:string):unknown {
-        return this.accessControl.access(identifier, accessType);
-    }
-    /**
-     * @deprecated use accessAsJSON() instead
-     */
-    getJSONAccessor(identifier:string):IJSONAccessor {
-        return this.getAccessor(identifier, 'json') as IJSONAccessor;
-    }
-    /**
-     * @deprecated use accessAsText() instead
-     */
-    getTextAccessor(identifier:string):ITextAccessor {
-        return this.getAccessor(identifier, 'text') as ITextAccessor;
-    }
-    /**
-     * @deprecated use accessAsBinary() instead
-     */
-    getBinaryAccessor(identifier:string):IBinaryAccessor {
-        return this.getAccessor(identifier, 'binary') as IBinaryAccessor;
-    }
-    /**
-     * @deprecated use copy() instead
-     */
-    copyAccessor(oldIdentifier:string, newIdentifier:string) {
-        const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
-
-        this.accessControl.copy(oldIdentifier, newIdentifier, accessType);
-    }
-    moveAccessor(oldIdentifier:string, newIdentifier:string) {
-        const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
-        
-        this.accessControl.move(oldIdentifier, newIdentifier, accessType);
+        await this.accessControl.move(oldIdentifier, newIdentifier, accessType);
     }
     
     protected validateAndGetAccessTypePair(oldIdentifier:string, newIdentifier:string) {
@@ -275,43 +239,41 @@ class ACStorage implements IACStorage {
         return oldAT;
     }
 
-    dropDir(identifier:string) {
+    async dropDir(identifier:string) {
         if (identifier === '') {
             throw new StorageError('Cannot drop the root directory. use dropAll() instead.');
         }
         
-        this.accessControl.releaseDir(identifier);
+        await this.accessControl.releaseDir(identifier);
     }
 
-    drop(identifier:string) {
-        this.accessControl.release(identifier);
+    async drop(identifier:string) {
+        await this.accessControl.release(identifier);
     }
     
-    dropAll() {
-        this.accessControl.releaseDir('');
+    async dropAll() {
+        await this.accessControl.releaseDir('');
     }
 
-    commit(identifier:string='') {
-        this.#commitRecursive(identifier);
+    async commit(identifier:string='') {
+        await this.#commitRecursive(identifier);
         
         if (!this.noCache) this.saveCache();
     }
 
-    commitAll() {
-        this.#commitRecursive('');
-
-        if (!this.noCache) this.saveCache();     
+    async commitAll() {
+        await this.commit('');
     }
 
-    #commitRecursive(identifier:string) {
+    async #commitRecursive(identifier:string) {
         const accessor = this.accessors.get(identifier);
         if (!accessor) return;
 
         for (const childIdentifier of accessor.dependent) {
-            this.#commitRecursive(childIdentifier);
+            await this.#commitRecursive(childIdentifier);
         }
 
-        if (!accessor.isDropped()) accessor.commit();
+        if (!accessor.isDropped()) await accessor.commit();
     }
 }
 

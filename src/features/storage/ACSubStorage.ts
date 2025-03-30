@@ -1,4 +1,4 @@
-import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from 'features/accessors/types';
+import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from '@/features/accessors';
 
 import { IACSubStorage } from './types';
 
@@ -15,69 +15,43 @@ class ACSubStorage implements IACSubStorage {
         return this.#master.subStorage(this.#prefix + ':' + identifier);
     }
 
-    access(identifier:string, accessType:string):unknown {
-        return this.#master.access(this.#prefix + ':' + identifier, accessType);
+    async access(identifier:string, accessType:string):Promise<unknown> {
+        return await this.#master.access(this.#prefix + ':' + identifier, accessType);
     }
-    accessAsJSON(identifier:string):IJSONAccessor {
-        return this.getAccessor(identifier, 'json') as IJSONAccessor;
+    async accessAsJSON(identifier:string):Promise<IJSONAccessor> {
+        return await this.access(identifier, 'json') as IJSONAccessor;
     }
-    accessAsText(identifier:string):ITextAccessor {
-        return this.getAccessor(identifier, 'text') as ITextAccessor;
+    async accessAsText(identifier:string):Promise<ITextAccessor> {
+        return await this.access(identifier, 'text') as ITextAccessor;
     }
-    accessAsBinary(identifier:string):IBinaryAccessor {
-        return this.getAccessor(identifier, 'binary') as IBinaryAccessor;
+    async accessAsBinary(identifier:string):Promise<IBinaryAccessor> {
+        return await this.access(identifier, 'binary') as IBinaryAccessor;
     }
-    copy(oldIdentifier:string, newIdentifier:string) {
-        this.#master.copy(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
+    async copy(oldIdentifier:string, newIdentifier:string) {
+        await this.#master.copy(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
     }
-    move(oldIdentifier:string, newIdentifier:string) {
-        this.#master.move(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
+    async move(oldIdentifier:string, newIdentifier:string) {
+        await this.#master.move(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
     }
 
+    async dropDir(identifier:string) {
+        await this.dropDir(this.#prefix + ':' + identifier);
+    }
 
-    /** @deprecated */
-    getJSONAccessor(identifier:string):IJSONAccessor {
-        return this.getAccessor(identifier, 'json') as IJSONAccessor;
-    }
-    /** @deprecated */
-    getTextAccessor(identifier:string):ITextAccessor {
-        return this.getAccessor(identifier, 'text') as ITextAccessor;
-    }
-    /** @deprecated */
-    getBinaryAccessor(identifier:string):IBinaryAccessor {
-        return this.getAccessor(identifier, 'binary') as IBinaryAccessor;
-    }
-    /** @deprecated */
-    getAccessor(identifier:string, accessType:string):unknown {
-        return this.#master.getAccessor(this.#prefix + ':' + identifier, accessType);
-    }
-    /** @deprecated */
-    copyAccessor(oldIdentifier:string, newIdentifier:string) {
-        this.#master.copyAccessor(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
-    }
-    /** @deprecated */
-    moveAccessor(oldIdentifier:string, newIdentifier:string) {
-        this.#master.moveAccessor(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
+    async drop(identifier:string) {
+        await this.drop(this.#prefix + ':' + identifier);
     }
     
-    dropDir(identifier:string) {
-        this.dropDir(this.#prefix + ':' + identifier);
+    async dropAll() {
+        await this.dropDir(this.#prefix);
     }
 
-    drop(identifier:string) {
-        this.drop(this.#prefix + ':' + identifier);
-    }
-    
-    dropAll() {
-        this.dropDir(this.#prefix);
+    async commit(identifier:string='') {
+        await this.#master.commit(this.#prefix + ':' + identifier);
     }
 
-    commit(identifier:string='') {
-        this.#master.commit(this.#prefix + ':' + identifier);
-    }
-
-    commitAll() {
-        this.#master.commit(this.#prefix);
+    async commitAll() {
+        await this.#master.commit(this.#prefix);
     }
 }
 

@@ -1,6 +1,6 @@
 import { IAccessorManager } from 'features/accessors'
 import { Accesses, AccessType } from 'features/StorageAccess'
-import TreeExplorer from 'features/TreeExplorer';
+import TreeNavigate from 'tree-navigate';
 
 import { AccessTree, StorageAccessControlEvent } from './types';
 
@@ -9,52 +9,51 @@ import { AccessDeniedError, DirectoryAccessError, NotRegisterError, StorageAcces
 class StorageAccessControl {
     #events:StorageAccessControlEvent;
     #rawTree:AccessTree = {};
-    private accessTree:TreeExplorer;
+    private accessTree:TreeNavigate;
 
     constructor(events:StorageAccessControlEvent) {
         this.#events = events;
-        this.accessTree = TreeExplorer.from({}, ':', true);
+        this.accessTree = TreeNavigate.from({}, { delimiter: ':', allowWildcard:true });
     }
 
     register(tree:AccessTree) {
         this.#rawTree = tree;
-        this.accessTree = TreeExplorer.from(tree, ':', true);
+        this.accessTree = TreeNavigate.from(tree, { delimiter: ':', allowWildcard:true });
     }
 
-    copy(oldIdentifier:string, newIdentifier:string, accessType:string) {
-        const oldACM = this.#getAccessorManager(oldIdentifier, accessType, true);
-        const newACM = this.#getAccessorManager(newIdentifier, accessType, true);
+    async copy(oldIdentifier:string, newIdentifier:string, accessType:string) {
+        const oldACM = await this.#getAccessorManager(oldIdentifier, accessType, true);
+        const newACM = await this.#getAccessorManager(newIdentifier, accessType, true);
 
         if (!newACM.isCompatible(oldACM)) {
             throw new UncompatibleAccessorError(`'${oldIdentifier}' and '${newIdentifier}' are not compatible.`);
         }
         
-        oldACM.copy(newACM);
+        await oldACM.copy(newACM);
     }
 
-    move(oldIdentifier:string, newIdentifier:string, accessType:string) {
-        const oldACM = this.#getAccessorManager(oldIdentifier, accessType, true);
-        const newACM = this.#getAccessorManager(newIdentifier, accessType, true);
+    async move(oldIdentifier:string, newIdentifier:string, accessType:string) {
+        const oldACM = await this.#getAccessorManager(oldIdentifier, accessType, true);
+        const newACM = await this.#getAccessorManager(newIdentifier, accessType, true);
 
         if (!newACM.isCompatible(oldACM)) {
             throw new UncompatibleAccessorError(`'${oldIdentifier}' and '${newIdentifier}' are not compatible.`);
         }
         
-        oldACM.move(newACM);
+        await oldACM.move(newACM);
     }
     
-    access(identifier:string, accessType:string):unknown {
-        const acm = this.#getAccessorManager(identifier, accessType);
+    async access(identifier:string, accessType:string):Promise<unknown> {
+        const acm = await this.#getAccessorManager(identifier, accessType);
         
         return acm.accessor;
     }
 
-    #getAccessorManager(identifier:string, accessType:string, allowDirectory:boolean=false):IAccessorManager<unknown> {
-        const walked = this.accessTree.walk(identifier);
+    async #getAccessorManager(identifier:string, accessType:string, allowDirectory:boolean=false):Promise<IAccessorManager<unknown>> {
+        const walked = this.accessTree.walk(identifier, { allowIntermediate:true });
         if (!walked) {
             throw new NotRegisterError(`'${identifier}' is not registered.`);
         }
-
         if (!allowDirectory && this.checkAccessIsDirectory(walked.value)) {
             throw new DirectoryAccessError(`'${identifier}' is directory.`);
         }
@@ -79,7 +78,7 @@ class StorageAccessControl {
             addAcc(splited[i]);
             subtree = subtree[walked.path[i]] as AccessTree;
             
-            this.#events.onAccess(acc, {
+            await this.#events.onAccess(acc, {
                 accessType : 'directory',
                 tree : subtree
             });
@@ -87,13 +86,13 @@ class StorageAccessControl {
         }
         addAcc(splited[length-1]);
 
-        const ac = this.#events.onAccess(acc, resolvedAccess);
+        const ac = await this.#events.onAccess(acc, resolvedAccess);
         chainDependency();
         
         return ac;
     }
 
-    release(identifier:string) {
+    async release(identifier:string) {
         const walked = this.accessTree.walk(identifier);
         if (!walked) {
             throw new NotRegisterError(`'${identifier}' is not registered.`);
@@ -102,13 +101,13 @@ class StorageAccessControl {
         if (this.checkAccessIsDirectory(walked.value)) {
             throw new DirectoryAccessError(`> '${identifier}' is directory.`);
         }
-        this.#events.onRelease(identifier);
+        await this.#events.onRelease(identifier);
     }
 
-    releaseDir(identifier:string) {
+    async releaseDir(identifier:string) {
         this.validateDirectoryPath(identifier);
         
-        this.#events.onRelease(identifier);
+        await this.#events.onRelease(identifier);
     }
 
     getAccessType(identifier:string):string[] {
@@ -119,7 +118,7 @@ class StorageAccessControl {
                 : access.accessType
             )
         }
-        const access:Accesses|null = this.accessTree.get(identifier);
+        const access:Accesses|null = this.accessTree.get(identifier, { allowIntermediate:true });
 
         if (access == null) {
             return [];
@@ -138,7 +137,7 @@ class StorageAccessControl {
     }
 
     validateDirectoryPath(identifier:string) {
-        const walked = this.accessTree.walk(identifier);
+        const walked = this.accessTree.walk(identifier, { allowIntermediate:true });
         if (!walked || !this.checkAccessIsDirectory(walked.value)) {
             throw new NotRegisterError(`'${identifier}' is not directory.`);
         }

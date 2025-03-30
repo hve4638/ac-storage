@@ -1,5 +1,6 @@
-import * as fs from 'node:fs';
-import type { IBinaryAccessor } from '../types';
+import { existsSync } from 'node:fs';
+import * as fs from 'node:fs/promises';
+import type { IBinaryAccessor } from './types';
 import { AccessorError } from '../errors';
 
 class BinaryAccessor implements IBinaryAccessor {
@@ -11,43 +12,43 @@ class BinaryAccessor implements IBinaryAccessor {
     }
     
     hasExistingData() {
-        return fs.existsSync(this.#filePath);
+        return existsSync(this.#filePath);
     }
-    write(buffer:Buffer) {
+    async write(buffer:Buffer) {
         this.#ensureNotDropped();
         
-        fs.writeFileSync(this.#filePath, buffer);
+        await fs.writeFile(this.#filePath, buffer);
     }
-    read():Buffer {
+    async read():Promise<Buffer> {
         this.#ensureNotDropped();
         
-        if (fs.existsSync(this.#filePath)) {
-            return fs.readFileSync(this.#filePath);   
+        if (existsSync(this.#filePath)) {
+            return await fs.readFile(this.#filePath);
         }
         else {
             return Buffer.from('');
         }
     }
-    writeBase64(data:string) {
+    async writeBase64(data:string) {
         this.#ensureNotDropped();
 
         const buffer = Buffer.from(data, 'base64');
         this.write(buffer);
     }
-    readBase64():string {
+    async readBase64():Promise<string> {
         this.#ensureNotDropped();
 
-        const buffer = this.read();
+        const buffer = await this.read();
         return buffer.toString('base64');
     }
-    drop() {
+    async drop() {
         this.#ensureNotDropped();
 
-        if (fs.existsSync(this.#filePath)) {
-            fs.rmSync(this.#filePath, { force: true });
+        if (existsSync(this.#filePath)) {
+            fs.rm(this.#filePath, { force: true });
         }
     }
-    commit() {
+    async commit() {
         this.#ensureNotDropped();
         // nothing to do
     }

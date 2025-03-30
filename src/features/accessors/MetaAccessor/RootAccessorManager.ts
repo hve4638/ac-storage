@@ -1,4 +1,4 @@
-import { IAccessorManager, IBinaryAccessor } from '../types';
+import { IAccessorManager } from '../types';
 
 class RootAccessorManager implements IAccessorManager<unknown> {
     accessor : unknown = {} as unknown;
@@ -10,39 +10,18 @@ class RootAccessorManager implements IAccessorManager<unknown> {
         return new RootAccessorManager();
     }
 
-    private constructor() {
+    private constructor() {}
 
-    }
+    async create() {}
+    async load() {}
+    async exists() { return false; }
+    async move(ac:IAccessorManager<never>) {}
+    async copy(ac:IAccessorManager<never>) {}
 
-    create() {
-        
-    }
-    load() {
-        
-    }
-    exists(): boolean {
-        return false;
-    }
-    move(ac:IAccessorManager<never>) {
-
-    }
-    copy(ac:IAccessorManager<never>) {
-
-    }
-
-    isCompatible(other:IAccessorManager<unknown>) {
-        return false;
-    }
-    
-    drop() {
-        
-    }
-    commit() {
-        
-    }
-    isDropped() {
-        return false;
-    }
+    isCompatible(other:IAccessorManager<unknown>) { return false; }
+    async drop() {}
+    async commit() {}
+    isDropped() { return false; }
 }
 
 export default RootAccessorManager;

@@ -28,24 +28,24 @@ describe('ACSubStorage', () => {
         storage.dropAll();
     });
 
-    test('substorage', () => {
+    test('substorage', async () => {
         const storageLayer1 = storage.subStorage('layer1');
 
-        const item1FromSubstorage = storageLayer1.getJSONAccessor('layer2:item.json');
+        const item1FromSubstorage = await storageLayer1.accessAsJSON('layer2:item.json');
         item1FromSubstorage.setOne('value', '1');
 
-        const item1 = storage.getJSONAccessor('layer1:layer2:item.json');
+        const item1 = await storage.accessAsJSON('layer1:layer2:item.json');
         expect(item1.getOne('value')).toBe('1');
     });
 
-    test('2-layer substorage', () => {
+    test('2-layer substorage', async () => {
         const storageLayer1 = storage.subStorage('layer1');
         const storageLayer2 = storageLayer1.subStorage('layer2');
 
-        const item1FromSubstorage = storageLayer2.getJSONAccessor('item.json');
+        const item1FromSubstorage = await storageLayer2.accessAsJSON('item.json');
         item1FromSubstorage.setOne('value', '1');
 
-        const item1 = storage.getJSONAccessor('layer1:layer2:item.json');
+        const item1 = await storage.accessAsJSON('layer1:layer2:item.json');
         expect(item1.getOne('value')).toBe('1');
     });
 

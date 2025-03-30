@@ -4,67 +4,40 @@ import type { AccessType } from 'features/StorageAccess';
 import { AccessorEvent } from 'types';
 
 
-export interface IACStorage {
+export interface IACStorage extends IACSubStorage {
     addListener(event:'release'|'access', listener:Function):void;
 
     register(tree:AccessTree):void;
     addAccessEvent<T extends string, AC>(customId:(T extends AccessType ? never : T), event:AccessorEvent<AC>):void;
-    subStorage (prefix:string):IACSubStorage;
-    
-    access(identifier:string, accessType:string):unknown;
-    accessAsJSON(identifier:string):IJSONAccessor;
-    accessAsText(identifier:string):ITextAccessor;
-    accessAsBinary(identifier:string):IBinaryAccessor;
-    copy(oldIdentifier:string, newIdentifier:string):void;
-    move(oldIdentifier:string, newIdentifier:string):void;
 
-    /** @deprecated use access() instead */
-    getAccessor(identifier:string, accessType:string):unknown;
-    /** @deprecated use accessAsJSON() instead */
-    getJSONAccessor(identifier:string):IJSONAccessor;
-    /** @deprecated use accessAsText() instead */
-    getTextAccessor(identifier:string):ITextAccessor;
-    /** @deprecated use accessAsBinary() instead */
-    getBinaryAccessor(identifier:string):IBinaryAccessor;
-    /** @deprecated use copy() instead */
-    copyAccessor(oldIdentifier:string, newIdentifier:string):void;
-    /** @deprecated use move() instead */
-    moveAccessor(oldIdentifier:string, newIdentifier:string):void;
+    // subStorage (prefix:string):IACSubStorage;
     
+    // access(identifier:string, accessType:string):Promise<unknown>;
+    // accessAsJSON(identifier:string):Promise<IJSONAccessor>;
+    // accessAsText(identifier:string):Promise<ITextAccessor>;
+    // accessAsBinary(identifier:string):Promise<IBinaryAccessor>;
+    // copy(oldIdentifier:string, newIdentifier:string):Promise<void>;
+    // move(oldIdentifier:string, newIdentifier:string):Promise<void>;
     
-    dropDir(identifier:string):void;
-    drop(identifier:string):void;
-    dropAll():void;
-    commit():void;
+    // dropDir(identifier:string):Promise<void>;
+    // drop(identifier:string):Promise<void>;
+    dropAll():Promise<void>;
+    // commit():void;
 }
 
 export interface IACSubStorage {
     subStorage (prefix:string):IACSubStorage;
 
-    access(identifier:string, accessType:string):unknown;
-    accessAsJSON(identifier:string):IJSONAccessor;
-    accessAsText(identifier:string):ITextAccessor;
-    accessAsBinary(identifier:string):IBinaryAccessor;
-    copy(oldIdentifier:string, newIdentifier:string):void;
-    move(oldIdentifier:string, newIdentifier:string):void;
-
+    access(identifier:string, accessType:string):Promise<unknown>;
+    accessAsJSON(identifier:string):Promise<IJSONAccessor>;
+    accessAsText(identifier:string):Promise<ITextAccessor>;
+    accessAsBinary(identifier:string):Promise<IBinaryAccessor>;
+    copy(oldIdentifier:string, newIdentifier:string):Promise<void>;
+    move(oldIdentifier:string, newIdentifier:string):Promise<void>;
     
-    /** @deprecated use access() instead */
-    getAccessor(identifier:string, accessType:string):unknown;
-    /** @deprecated use accessAsJSON() instead */
-    getJSONAccessor(identifier:string):IJSONAccessor;
-    /** @deprecated use accessAsText() instead */
-    getTextAccessor(identifier:string):ITextAccessor;
-    /** @deprecated use accessAsBinary() instead */
-    getBinaryAccessor(identifier:string):IBinaryAccessor;
-    /** @deprecated use copy() instead */
-    copyAccessor(oldIdentifier:string, newIdentifier:string):void;
-    /** @deprecated use move() instead */
-    moveAccessor(oldIdentifier:string, newIdentifier:string):void;
-    
-    dropDir(identifier:string):void;
-    drop(identifier:string):void;
-    dropAll():void;
-    commit(identifier:string):void;
-    commitAll():void;
+    dropDir(identifier:string):Promise<void>;
+    drop(identifier:string):Promise<void>;
+    dropAll():Promise<void>;
+    commit(identifier:string):Promise<void>;
+    commitAll():Promise<void>;
 }

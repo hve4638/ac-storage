@@ -1,5 +1,6 @@
-import * as fs from 'node:fs';
-import type { ITextAccessor } from '../types';
+import { existsSync } from 'node:fs';
+import * as fs from 'node:fs/promises';
+import type { ITextAccessor } from './types';
 import { AccessorError } from '../errors';
 
 class TextAccessor implements ITextAccessor {
@@ -10,41 +11,45 @@ class TextAccessor implements ITextAccessor {
         this.#filePath = filePath;
     }
     
-    hasExistingData() {
-        return fs.existsSync(this.#filePath);
+    async hasExistingData() {
+        return (
+            existsSync(this.#filePath)
+            && (await fs.stat(this.#filePath)).isFile()
+        )
     }
-    write(text:string) {
+    async write(text:string) {
         this.#ensureNotDropped();
-        fs.writeFileSync(this.#filePath, text);
+        await fs.writeFile(this.#filePath, text);
     }
-    append(text:string) {
+    async append(text:string) {
         this.#ensureNotDropped();
-        fs.appendFileSync(this.#filePath, text);
+        await fs.appendFile(this.#filePath, text);
     }
-    read():string {
+    async read():Promise<string> {
         this.#ensureNotDropped();
 
-        if (fs.existsSync(this.#filePath)) {
-            return fs.readFileSync(this.#filePath).toString();
+        if (existsSync(this.#filePath)) {
+            return (await fs.readFile(this.#filePath)).toString();
         }
         else {
             return '';
         }
     }
-    drop() {
-        if (this.dropped) return;
-        
-        fs.rmSync(this.#filePath, { force: true });
-        this.#dropped = true;
-    }
-    commit() {
+
+    async save() {
         this.#ensureNotDropped();
-        
-        if (!fs.existsSync(this.#filePath)) {
-            fs.writeFileSync(this.#filePath, '');
+
+        if (!existsSync(this.#filePath)) {
+            await fs.writeFile(this.#filePath, '');
         }
     }
-    
+
+    async drop() {
+        if (this.dropped) return;
+        
+        await fs.rm(this.#filePath, { force: true });
+        this.#dropped = true;
+    }
     get dropped() {
         return this.#dropped;
     }

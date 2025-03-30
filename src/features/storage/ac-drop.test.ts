@@ -29,18 +29,18 @@ describe('Accessor Drop', () => {
         storage.dropAll();
     });
 
-    test('drop', () => { 
+    test('drop', async () => { 
         const dropLog:string[] = [];
 
         storage.addListener('release', (identifier:string) => {
             dropLog.push(identifier);
         });
 
-        storage.getAccessor('layer1:layer2:item1', 'text');
-        storage.getAccessor('layer1:layer2:item2', 'text');
-        storage.getAccessor('layer1:layer2:item3', 'text');
+        await storage.access('layer1:layer2:item1', 'text');
+        await storage.access('layer1:layer2:item2', 'text');
+        await storage.access('layer1:layer2:item3', 'text');
         
-        storage.dropDir('layer1:layer2');
+        await storage.dropDir('layer1:layer2');
         expect(dropLog).toEqual([
             'layer1:layer2:item1',
             'layer1:layer2:item2',
@@ -50,7 +50,7 @@ describe('Accessor Drop', () => {
     });
 
     
-    test('drop2', () => { 
+    test('drop2', async () => { 
         const accessLog:string[] = [];
         const dropLog:string[] = [];
         storage.addListener('access', (identifier:string) => {
@@ -60,10 +60,10 @@ describe('Accessor Drop', () => {
             dropLog.push(identifier);
         });
 
-        storage.getAccessor('layer1:layer2:item2', 'text');
-        storage.getAccessor('layer1:layer2:item3', 'text');
+        await storage.access('layer1:layer2:item2', 'text');
+        await storage.access('layer1:layer2:item3', 'text');
         
-        storage.dropDir('layer1');
+        await storage.dropDir('layer1');
         expect(accessLog).toEqual([
             'layer1',
             'layer1:layer2',
@@ -80,7 +80,7 @@ describe('Accessor Drop', () => {
         ]);
     });
 
-    test('dropAll', () => {
+    test('dropAll', async () => {
         const accessLog:string[] = [];
         const dropLog:string[] = [];
         storage.addListener('access', (identifier:string) => {
@@ -90,13 +90,12 @@ describe('Accessor Drop', () => {
             dropLog.push(identifier);
         });
 
-        storage.getAccessor('item1', 'text');
-        storage.getAccessor('layer1:item2', 'text');
-        storage.getAccessor('layer1:layer2:item3', 'text');
-        storage.getAccessor('layer1:layer2:item4', 'text');
-        storage.commit();
+        await storage.access('item1', 'text');
+        await storage.access('layer1:item2', 'text');
+        await storage.access('layer1:layer2:item3', 'text');
+        await storage.access('layer1:layer2:item4', 'text');
+        await storage.commitAll();
         
-        storage.dropAll();
         expect(accessLog).toEqual([
             'item1',
             'layer1',
@@ -108,6 +107,8 @@ describe('Accessor Drop', () => {
             'layer1:layer2',
             'layer1:layer2:item4',
         ]);
+
+        await storage.dropAll();
         expect(dropLog).toEqual([
             'item1',
             'layer1:item2',

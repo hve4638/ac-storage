@@ -1,18 +1,19 @@
 import { IAccessorManager } from 'features/accessors';
-import { Accesses } from '../../features/StorageAccess'
+import { Accesses } from '@/features/StorageAccess'
+import { type Leaf } from 'tree-navigate';
 
 export type AccessTree = {
-    [key:string] :AccessTree|Accesses|undefined;
-    '*'? : AccessTree|Accesses,
-    '**/*'? : Accesses,
+    [key:string] :AccessTree|Leaf<Accesses>|undefined;
+    '*'? : AccessTree|Leaf<Accesses>,
+    '**/*'? : Leaf<Accesses>,
     ''? : never,
     ':'? : never,
 }
 
 export type StorageAccessControlEvent = {
-    onAccess:(identifier:string, accessType:Accesses)=>IAccessorManager<unknown>,
+    onAccess:(identifier:string, accessType:Accesses)=>Promise<IAccessorManager<unknown>>,
     // onAccessDir:(identifier:string, tree:AccessTree)=>void,
-    onRelease:(identifier:string)=>void,
+    onRelease:(identifier:string)=>Promise<void>,
     // onReleaseDir:(identifier:string)=>void,
     onChainDependency:(idDependBy:string, idDependTo:string)=>void,
 }

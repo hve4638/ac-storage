@@ -8,6 +8,7 @@ module.exports = {
     transformIgnorePatterns: ['<rootDir>/node_modules/'],
     testMatch: ['<rootDir>/src/**/*.(spec|test).ts'],
     moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
         '^types$': '<rootDir>/src/types/index',
         '^types/(.*)$': '<rootDir>/src/types/$1',
         '^features/(.*)$': '<rootDir>/src/features/$1',

@@ -10,7 +10,7 @@ class MemACStorage extends ACStorage {
     }
 
     override initAccessControl() {
-        const onAccess = (identifier:string, sa:Accesses) => {
+        const onAccess = async (identifier:string, sa:Accesses) => {
             this.eventListeners.access?.(identifier, sa);
 
             let item = this.accessors.get(identifier);
@@ -57,12 +57,12 @@ class MemACStorage extends ACStorage {
             this.accessors.set(identifier, acm);
             return acm;
         }
-        const onRelease = (identifier:string) => {
+        const onRelease = async (identifier:string) => {
             const accessor = this.accessors.get(identifier);
             if (!accessor) return;
 
             for (const child of accessor.dependent) {
-                onRelease(child);
+                await onRelease(child);
             }
             if (identifier === '') return;
             this.eventListeners.release?.(identifier);

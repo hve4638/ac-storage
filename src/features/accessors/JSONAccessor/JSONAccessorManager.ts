@@ -1,7 +1,10 @@
-import JSONAccessor from './JSONAccessor';
-import MemJSONAccessor from './MemJSONAccessor';
-import { IAccessorManager, IJSONAccessor } from '../types';
-import { JSONTree } from 'types/json';
+import {
+    type IJSONAccessor,
+    type JSONTree,
+    JSONAccessor,
+    MemJSONAccessor,
+} from '@hve/json-accessor';
+import { IAccessorManager } from '../types';
 
 class JSONAccessorManager implements IAccessorManager<IJSONAccessor> {
     accessor : IJSONAccessor;
@@ -20,22 +23,25 @@ class JSONAccessorManager implements IAccessorManager<IJSONAccessor> {
         this.accessor = accessor;
     }
 
-    create() {
+    async create() {
         
     }
-    load() {
-        this.accessor.loadData();
+    async load() {
+        await this.accessor.load();
     }
-    exists() {
-        return this.accessor.hasExistingData();
+    async exists() {
+        return await this.accessor.hasExistingData();
     }
-    move(acm:IAccessorManager<IJSONAccessor>) {
-        const newAC = this.copy(acm);
-        this.drop();
+    async move(acm:IAccessorManager<IJSONAccessor>) {
+        const newAC = await this.copy(acm);
+        await Promise.all([
+            acm.commit(),
+            this.drop()
+        ]);
         
         return newAC;
     }
-    copy(acm:IAccessorManager<IJSONAccessor>) {
+    async copy(acm:IAccessorManager<IJSONAccessor>) {
         if (this.isDropped()) {
             throw new Error(`This accessor is already dropped.`);
         }
@@ -48,7 +54,7 @@ class JSONAccessorManager implements IAccessorManager<IJSONAccessor> {
             return false;
         }
         
-        return this.#isEqualJsonTree(this.accessor.jsonStructure, other.accessor.jsonStructure);
+        return this.#isEqualJsonTree(this.accessor.tree, other.accessor.tree);
     }
 
     #isEqualJsonTree(a:JSONTree|null, b:JSONTree|null):boolean {
@@ -85,12 +91,12 @@ class JSONAccessorManager implements IAccessorManager<IJSONAccessor> {
         }
         return a == b;
     }
-
-    drop() {
-        this.accessor.drop();
+    
+    async drop() {
+        await this.accessor.drop();
     }
-    commit() {
-        this.accessor.commit();
+    async commit() {
+        await this.accessor.save();
     }
     isDropped() {
         return this.accessor.dropped;

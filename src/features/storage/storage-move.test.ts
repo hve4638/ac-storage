@@ -4,7 +4,7 @@ import { TEST_PATH } from 'data/test';
 
 import { ACStorage } from 'features/storage';
 import StorageAccess from 'features/StorageAccess';
-import { JSONType } from 'types/json';
+import { JSONType } from '@hve/json-accessor';
 
 type AC = [string, string];
 type COPY_OR_MOVE_TEST_STRUCT = {
@@ -19,10 +19,10 @@ describe('ACStorage Accessor 복사/이동 테스트', () => {
 
     const TREE = {
         'json1' : {
-            '*' : StorageAccess.JSON({ value : JSONType.number }),
+            '*' : StorageAccess.JSON({ value : JSONType.Number() }),
         },
         'json2' : {
-            '*' : StorageAccess.JSON({ value : JSONType.number }),
+            '*' : StorageAccess.JSON({ value : JSONType.Number() }),
         },
         'text1' : {
             '*' : StorageAccess.Text(),
@@ -31,7 +31,7 @@ describe('ACStorage Accessor 복사/이동 테스트', () => {
             '*' : StorageAccess.Text(),
         },
         '*' : {
-            'index.json' : StorageAccess.JSON({ value : JSONType.number }),
+            'index.json' : StorageAccess.JSON({ value : JSONType.Number() }),
         }
     }
     const passTestcases:COPY_OR_MOVE_TEST_STRUCT[] = [
@@ -77,20 +77,24 @@ describe('ACStorage Accessor 복사/이동 테스트', () => {
     });
 
     for (const { before, copy } of passTestcases) {
-        test(`copy (${copy[0]} -> ${copy[1]})`, () => {
+        test(`copy (${copy[0]} -> ${copy[1]})`, async () => {
             for(const [identifier, ac] of before) {
-                storage.getAccessor(identifier, ac);
+                await storage.access(identifier, ac);
             }
-            storage.copyAccessor(copy[0], copy[1]);
+            await storage.copy(copy[0], copy[1]);
         });
     }
 
     for (const { before, copy } of failTestcases) {
-        test(`copy (${copy[0]} -> ${copy[1]})`, () => {
+        test(`copy (${copy[0]} -> ${copy[1]})`, async () => {
             for(const [identifier, ac] of before) {
-                storage.getAccessor(identifier, ac);
+                await storage.access(identifier, ac);
             }
-            expect(() => storage.copyAccessor(copy[0], copy[1])).toThrow();
+            await expect(storage.copy(copy[0], copy[1])).rejects.toThrow();
         });
     }
+    
+    test(`copy 123`, async () => {
+        await storage.access('text1:index.txt', 'text');
+    });
 });

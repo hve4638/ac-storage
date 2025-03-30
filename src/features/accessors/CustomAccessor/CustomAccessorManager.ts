@@ -1,7 +1,6 @@
 import { AccessorEvent } from 'types';
 import { IAccessorManager } from '../types';
 import { AccessorManagerError } from 'errors';
-import { ICustomAccessor } from './types';
 
 type CustomAccessorArgs<AC> = {
     customId:string;
@@ -41,28 +40,28 @@ class CustomAccessorManager<AC> implements IAccessorManager<AC> {
         return this.#accessor;
     }
 
-    create() {
-        if (this.#event.create) this.#event.create(this.accessor, this.#actualPath, ...this.#customArgs);
+    async create() {
+        if (this.#event.create) await this.#event.create(this.accessor, this.#actualPath, ...this.#customArgs);
     }
 
-    load() {
-        if (this.#event.load) this.#event.load(this.accessor, this.#actualPath, ...this.#customArgs);
+    async load() {
+        if (this.#event.load) await this.#event.load(this.accessor, this.#actualPath, ...this.#customArgs);
     }
-    exists() {
+    async exists() {
         if (this.#event.exists) {
-            return this.#event.exists(this.accessor, this.#actualPath, ...this.#customArgs);
+            return await this.#event.exists(this.accessor, this.#actualPath, ...this.#customArgs);
         }
         else {
             return false;
         }
     }
 
-    move(ac:IAccessorManager<AC>) {
+    async move(ac:IAccessorManager<AC>) {
         if (this.#event.move) {
-            this.#event.move(this.accessor, ac.accessor);
+            await this.#event.move(this.accessor, ac.accessor);
         }
         else if (this.#event.copy) {
-            this.#event.copy(this.accessor, ac.accessor);
+            await this.#event.copy(this.accessor, ac.accessor);
         }
         else {
             throw new AccessorManagerError('This accessor does not support move operation.');
@@ -70,9 +69,9 @@ class CustomAccessorManager<AC> implements IAccessorManager<AC> {
 
         this.drop();
     }
-    copy(ac:IAccessorManager<AC>) {
+    async copy(ac:IAccessorManager<AC>) {
         if (this.#event.copy) {
-            this.#event.copy(this.accessor, ac.accessor);
+            await this.#event.copy(this.accessor, ac.accessor);
         }
         else {
             throw new AccessorManagerError('This accessor does not support copy operation.');
@@ -94,14 +93,14 @@ class CustomAccessorManager<AC> implements IAccessorManager<AC> {
         }
     }
     
-    drop() {
+    async drop() {
         if (this.#accessor == null) return;
-        if (this.#event.destroy) this.#event.destroy(this.accessor, this.#actualPath, ...this.#customArgs);
+        if (this.#event.destroy) await this.#event.destroy(this.accessor, this.#actualPath, ...this.#customArgs);
 
         this.#accessor = null;
     }
-    commit() {
-        if (this.#event.save) this.#event.save(this.accessor, this.#actualPath, ...this.#customArgs);
+    async commit() {
+        if (this.#event.save) await this.#event.save(this.accessor, this.#actualPath, ...this.#customArgs);
     }
     isDropped() {
         return this.#accessor == null;

@@ -1,5 +1,6 @@
 import BinaryAccessor from './BinaryAccessor';
-import { IAccessorManager, IBinaryAccessor } from '../types';
+import { IAccessorManager } from '../types';
+import { type IBinaryAccessor } from './types';
 import MemBinaryAccessor from './MemBinaryAccessor';
 
 class BinaryAccessorManager implements IAccessorManager<IBinaryAccessor> {
@@ -19,38 +20,40 @@ class BinaryAccessorManager implements IAccessorManager<IBinaryAccessor> {
         this.accessor = accessor;
     }
 
-    create() {
+    async create() {
         
     }
-    load() {
+    async load() {
         
     }
-    exists() {
+    async exists() {
         return this.accessor.hasExistingData();
     }
-    move(ac:IAccessorManager<IBinaryAccessor>) {
-        const newAC = this.copy(ac);
-        this.drop();
+    async move(acm:IAccessorManager<IBinaryAccessor>) {
+        const newAC = await this.copy(acm);
+        await acm.commit();
+        await this.drop();
+        
         
         return newAC;
     }
-    copy(ac:IAccessorManager<IBinaryAccessor>) {
+    async copy(ac:IAccessorManager<IBinaryAccessor>) {
         if (this.isDropped()) {
             throw new Error(`This accessor is already dropped.`);
         }
 
-        ac.accessor.write(this.accessor.read());
+        ac.accessor.write(await this.accessor.read());
     }
 
     isCompatible(other:IAccessorManager<unknown>):other is BinaryAccessorManager {
         return other instanceof BinaryAccessorManager;
     }
     
-    drop() {
-        this.accessor.drop();
+    async drop() {
+        await this.accessor.drop();
     }
-    commit() {
-        this.accessor.commit();
+    async commit() {
+        await this.accessor.commit();
     }
     isDropped() {
         return this.accessor.dropped;

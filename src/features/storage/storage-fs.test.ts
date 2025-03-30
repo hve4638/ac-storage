@@ -4,7 +4,7 @@ import { TEST_PATH } from 'data/test';
 
 import { ACStorage } from 'features/storage';
 import StorageAccess from 'features/StorageAccess';
-import { JSONType } from 'types/json';
+import { JSONType } from '@hve/json-accessor';
 
 function isFile(filename:string) {
     if (!fs.existsSync(filename)) {
@@ -38,19 +38,19 @@ describe('ACStorage FS Test', () => {
         return path.join(testDirectory, ...args);
     }
     
-    beforeAll(() => {
+    beforeAll(async () => {
         fs.rmSync(testDirectory, { recursive: true, force: true });
     });
-    beforeEach(() => {
+    beforeEach(async () => {
         fs.mkdirSync(testDirectory, { recursive: true });
         storage = new ACStorage(testDirectory);
     });
-    afterEach(() => {
+    afterEach(async () => {
         fs.rmSync(testDirectory, { recursive: true });
-        storage.dropAll();
+        await storage.dropAll();
     });
     
-    test('파일 ACStorage FS 연동', () => {
+    test('파일 ACStorage FS 연동', async () => {
         const configPath = getPath('config.json');
         const dataPath = getPath('data.txt');
         const verifyState = (expected: { config: boolean, data: boolean }, comment:any='') => {
@@ -76,25 +76,25 @@ describe('ACStorage FS Test', () => {
         verifyState({ config: false, data: false }, 1);
 
         // 2. JSONAccesor 접근
-        storage.getJSONAccessor('config.json');
-        storage.commit();
-        verifyState({ config: true, data: false }, 3);
+        await storage.accessAsJSON('config.json');
+        await storage.commit();
+        verifyState({ config: true, data: false }, 2);
 
         // 4. TextAccessor 접근
-        storage.getTextAccessor('data.txt');
-        storage.commit();
-        verifyState({ config: true, data: true }, 4);
+        await storage.accessAsText('data.txt');
+        await storage.commit();
+        verifyState({ config: true, data: true }, 3);
 
         // 5. 저장소 삭제
-        storage.drop('config.json');
-        verifyState({ config: false, data: true }, 6);
+        await storage.drop('config.json');
+        verifyState({ config: false, data: true }, 4);
         
         // 6. 저장소 삭제
-        storage.drop('data.txt');
-        verifyState({ config: false, data: false }, 7);
+        await storage.drop('data.txt');
+        verifyState({ config: false, data: false }, 5);
     });
 
-    test('디렉토리 ACStorage FS 연동', () => {
+    test('디렉토리 ACStorage FS 연동', async () => {
         const baseDirPath = getPath('base');
         const dataPath = getPath('base', 'data.txt');
         const configPath = getPath('base', 'config.json');
@@ -126,21 +126,21 @@ describe('ACStorage FS Test', () => {
         verifyState({ base : false, config: false, data: false }, 1);
 
         // 2. 접근
-        storage.getJSONAccessor('base:config.json');
-        storage.commit();
+        await storage.accessAsJSON('base:config.json');
+        await storage.commit();
         verifyState({ base : true, config: true, data: false }, 2);
         
         // 3. 접근
-        storage.getTextAccessor('base:data.txt');
-        storage.commit();
+        await storage.accessAsText('base:data.txt');
+        await storage.commit();
         verifyState({ base : true, config: true, data: true }, 3);
 
         // 4. 단일 접근자 삭제 (즉시 파일시스템 반영)
-        storage.drop('base:config.json');
+        await storage.drop('base:config.json');
         verifyState({ base : true, config: false, data: true }, 4);
     });
 
-    test('파일 수동 이동', ()=>{
+    test('파일 수동 이동', async ()=>{
         const prevPath = getPath('prev.json');
         const nextPath = getPath('next.json');
         const data = {
@@ -159,18 +159,18 @@ describe('ACStorage FS Test', () => {
         });
         
         // 2. 저장소 생성
-        let prev = storage.getJSONAccessor('prev.json');
+        let prev = await storage.accessAsJSON('prev.json');
         prev.set(data);
-        prev.commit();
+        await prev.save();
 
         expect(isFile(prevPath)).toBeTruthy();
         expect(isFile(nextPath)).toBeFalsy();
 
         // 3. 새 저장소 생성 및 이동
-        let next = storage.getJSONAccessor('next.json');
+        let next = await storage.accessAsJSON('next.json');
         next.set(prev.getAll());
-        prev.drop();
-        next.commit();
+        await prev.drop();
+        await next.save();
 
         expect(isFile(prevPath)).toBeFalsy();
         expect(isFile(nextPath)).toBeTruthy();
@@ -178,7 +178,7 @@ describe('ACStorage FS Test', () => {
         expect(next.getAll()).toEqual(data);
     });
     
-    test('파일 이동', ()=>{
+    test('파일 이동', async ()=>{
         const prevPath = getPath('prev.json');
         const nextPath = getPath('next.json');
         
@@ -188,30 +188,30 @@ describe('ACStorage FS Test', () => {
 
         // 1. 저장소 등록
         storage.register({
-            '*' : StorageAccess.JSON({ value : JSONType.number }),
+            '*' : StorageAccess.JSON({ value : JSONType.Number() }),
         });
         
         // 2. 저장소 생성
-        let prev = storage.getJSONAccessor('prev.json');
+        let prev = await storage.accessAsJSON('prev.json');
         prev.setOne('value', 1);
-        storage.commit();
+        await storage.commit();
 
         expect(isFile(prevPath)).toBeTruthy();
         expect(isFile(nextPath)).toBeFalsy();
 
         // 3. 새 저장소 생성 및 이동
-        storage.moveAccessor('prev.json', 'next.json');
-        storage.commit();
+        await storage.move('prev.json', 'next.json');
+        await storage.commit();
 
         expect(isFile(prevPath)).toBeFalsy();
         expect(isFile(nextPath)).toBeTruthy();
 
         // 4. 내용 확인
-        const nextAC = storage.getJSONAccessor('next.json');
+        const nextAC = await storage.accessAsJSON('next.json');
         expect(nextAC.getAll()).toEqual({ value : 1 });
     });
     
-    test('파일 복사', ()=>{
+    test('파일 복사', async ()=>{
         const prevPath = getPath('prev.json');
         const nextPath = getPath('next.json');
         
@@ -221,30 +221,30 @@ describe('ACStorage FS Test', () => {
 
         // 1. 저장소 등록
         storage.register({
-            '*' : StorageAccess.JSON({ value : JSONType.number }),
+            '*' : StorageAccess.JSON({ value : JSONType.Number() }),
         });
         
         // 2. 저장소 생성
-        let prev = storage.getJSONAccessor('prev.json');
+        let prev = await storage.accessAsJSON('prev.json');
         prev.setOne('value', 1);
-        storage.commit();
+        await storage.commit();
 
         expect(isFile(prevPath)).toBeTruthy();
         expect(isFile(nextPath)).toBeFalsy();
 
         // 3. 새 저장소 생성 및 이동
-        storage.copyAccessor('prev.json', 'next.json');
-        storage.commit();
+        await storage.copy('prev.json', 'next.json');
+        await storage.commit();
 
         expect(isFile(prevPath)).toBeTruthy();
         expect(isFile(nextPath)).toBeTruthy();
 
         // 4. 내용 확인
-        const nextAC = storage.getJSONAccessor('next.json');
+        const nextAC = await storage.accessAsJSON('next.json');
         expect(nextAC.getAll()).toEqual({ value : 1 });
     });
     
-    test('디렉토리 이동', ()=>{
+    test('디렉토리 이동', async ()=>{
         const prevPath = getPath('prev/index.json');
         const nextPath = getPath('next/index.json');
         
@@ -255,33 +255,34 @@ describe('ACStorage FS Test', () => {
         // 1. 저장소 등록
         storage.register({
             'prev' : {
-                '*' : StorageAccess.JSON({ value : JSONType.number }),
+                '*' : StorageAccess.JSON({ value : JSONType.Number() }),
             },
             'next' : {
-                '*' : StorageAccess.JSON({ value : JSONType.number }),
+                '*' : StorageAccess.JSON({ value : JSONType.Number() }),
             },
         });
         
         // 2. 저장소 생성
-        let prev = storage.getJSONAccessor('prev:index.json');
-        prev.setOne('value', 1);
-        storage.commit();
+        let prevAC = await storage.accessAsJSON('prev:index.json');
+        prevAC.setOne('value', 1);
+        await storage.commit();
 
         expect(isFile(prevPath)).toBeTruthy();
         expect(isFile(nextPath)).toBeFalsy();
+        expect(prevAC.getAll()).toEqual({ value : 1 });
 
         // 3. 새 저장소 생성 및 이동
-        storage.moveAccessor('prev', 'next');
+        await storage.move('prev', 'next');
 
         expect(isFile(prevPath)).toBeFalsy();
         expect(isFile(nextPath)).toBeTruthy();
 
         // 4. 내용 확인
-        const nextAC = storage.getJSONAccessor('next:index.json');
+        const nextAC = await storage.accessAsJSON('next:index.json');
         expect(nextAC.getAll()).toEqual({ value : 1 });
     });
     
-    test('디렉토리 복사', ()=>{
+    test('디렉토리 복사', async ()=>{
         const prevPath = getPath('prev/index.json');
         const nextPath = getPath('next/index.json');
         
@@ -292,33 +293,33 @@ describe('ACStorage FS Test', () => {
         // 1. 저장소 등록
         storage.register({
             'prev' : {
-                '*' : StorageAccess.JSON({ value : JSONType.number }),
+                '*' : StorageAccess.JSON({ value : JSONType.Number() }),
             },
             'next' : {
-                '*' : StorageAccess.JSON({ value : JSONType.number }),
+                '*' : StorageAccess.JSON({ value : JSONType.Number() }),
             },
         });
         
         // 2. 저장소 생성
-        let prev = storage.getJSONAccessor('prev:index.json');
+        let prev = await storage.accessAsJSON('prev:index.json');
         prev.setOne('value', 1);
-        storage.commit();
+        await storage.commit();
 
         expect(isFile(prevPath)).toBeTruthy();
         expect(isFile(nextPath)).toBeFalsy();
 
         // 3. 새 저장소 생성 및 복사
-        storage.copyAccessor('prev', 'next');
+        await storage.copy('prev', 'next');
 
         expect(isFile(prevPath)).toBeTruthy();
         expect(isFile(nextPath)).toBeTruthy();
 
         // 4. 내용 확인
-        const nextAC = storage.getJSONAccessor('next:index.json');
+        const nextAC = await storage.accessAsJSON('next:index.json');
         expect(nextAC.getAll()).toEqual({ value : 1 });
     });
 
-    test('SubStorage 복사', ()=>{
+    test('SubStorage 복사', async ()=>{
         const prevPath = getPath('layer1/prev.json');
         const nextPath = getPath('layer1/next.json');
         
@@ -329,28 +330,28 @@ describe('ACStorage FS Test', () => {
         // 1. 저장소 등록
         storage.register({
             'layer1' : {
-                '*' : StorageAccess.JSON({ value : JSONType.number }),
+                '*' : StorageAccess.JSON({ value : JSONType.Number() }),
             },
         });
         
         // 2. 저장소 생성
         let substorage = storage.subStorage('layer1');
-        let prev = substorage.getJSONAccessor('prev.json');
+        let prev = await substorage.accessAsJSON('prev.json');
         prev.setOne('value', 1);
-        storage.commit();
+        await storage.commit();
 
         expect(isFile(prevPath)).toBeTruthy();
         expect(isFile(nextPath)).toBeFalsy();
 
         // 3. 새 저장소 생성 및 복사
-        substorage.copyAccessor('prev.json', 'next.json');
-        substorage.commitAll();
+        await substorage.copy('prev.json', 'next.json');
+        await substorage.commitAll();
 
         expect(isFile(prevPath)).toBeTruthy();
         expect(isFile(nextPath)).toBeTruthy();
 
         // 4. 내용 확인
-        const nextAC = storage.getJSONAccessor('layer1:next.json');
+        const nextAC = await storage.accessAsJSON('layer1:next.json');
         expect(nextAC.getAll()).toEqual({ value : 1 });
     });
 });

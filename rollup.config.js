@@ -39,6 +39,7 @@ export default [
                 compilerOptions: {
                     "baseUrl": "./",
                     "paths": {
+                      "@/*": ["src/*"],
                       "types": ["src/types/index"],
                       "types/*": ["src/types/*"],
                       "errors": ["src/errors/index"],

@@ -1,29 +1,29 @@
+import { JSONTree } from '@hve/json-accessor';
 import { type AccessTree } from 'features/StorageAccessControl';
-import { JSONTree } from 'types/json';
 
 export type AccessType = 'nothing' | 'text' | 'binary' | 'json' | 'custom' | 'union' | 'directory';
 
 export type BasicAccess = {
-    accessType : 'nothing' | 'text' | 'binary'
+    accessType : 'nothing' | 'text' | 'binary',
 };
 export type JSONAccess = {
     accessType : 'json',
-    structure? : JSONTree
+    structure? : JSONTree,
 }
 export type CustomAccess = {
     accessType : 'custom',
     id : string,
-    args : unknown[]
+    args : unknown[],
 }
 export type UnionAccess = {
     accessType : 'union',
-    accesses : Accesses[]
+    accesses : Accesses[],
 }
 export type DirectoryAccess = {
     accessType : 'directory',
-    tree: AccessTree
+    tree: AccessTree,
 }
 
-export type NonUnionAccesses = BasicAccess | JSONAccess | CustomAccess;
-export type Accesses = NonUnionAccesses | UnionAccess | DirectoryAccess;
+export type NonUnionAccesses = (BasicAccess | JSONAccess | CustomAccess);
+export type Accesses = (NonUnionAccesses | UnionAccess | DirectoryAccess);
 

@@ -4,27 +4,27 @@ export type AccessorEvent<AC={}> = {
     /**
      * 신규 파일 생성 시 호출
      */
-    create?: (ac:AC, actualPath:string|null, ...args:any[])=>void;
+    create?: (ac:AC, actualPath:string|null, ...args:any[])=>Promise<void>;
     
     /**
      * 파일이 존재한다면 create() 대신 호출됨
      */
-    load?: (ac:AC, actualPath:string|null, ...args:any[])=>void;
+    load?: (ac:AC, actualPath:string|null, ...args:any[])=>Promise<void>;
 
-    save?: (ac:AC, actualPath:string|null, ...args:any[])=>void;
+    save?: (ac:AC, actualPath:string|null, ...args:any[])=>Promise<void>;
 
-    exists?: (ac:AC, actualPath:string|null, ...args:any[])=>boolean;
+    exists?: (ac:AC, actualPath:string|null, ...args:any[])=>Promise<boolean>;
 
-    destroy?: (ac:AC, actualPath:string|null, ...args:any[])=>void;
+    destroy?: (ac:AC, actualPath:string|null, ...args:any[])=>Promise<void>;
 
-    copy? : (prevAC:AC, nextAC:AC)=>void;
+    copy? : (prevAC:AC, nextAC:AC)=>Promise<void>;
     /**
      * Optional
      * 
      * 호환가능한 Accessor인 경우, copy 작업 시 호출된다.
      * 구현하지 않은 경우, copy를 통해 move 작업을 수행한다.
      */
-    move? : (prevAC:AC, nextAC:AC)=>void;
+    move? : (prevAC:AC, nextAC:AC)=>Promise<void>;
     /**
      * Optional
      * 

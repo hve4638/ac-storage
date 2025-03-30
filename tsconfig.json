@@ -28,6 +28,7 @@
         "outDir" : "./dist",
         "baseUrl": "./",
         "paths": {
+          "@/*": ["src/*"],
           "types": ["src/types/index"],
           "errors": ["src/errors/index"],
           "types/*": ["src/types/*"],

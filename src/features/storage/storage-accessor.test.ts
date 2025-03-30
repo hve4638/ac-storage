@@ -32,8 +32,8 @@ describe('Storage Accessor Test', () => {
         storage.dropAll();
     });
     
-    test('JSONAccessor', () => {
-        const accessor = storage.getJSONAccessor('config.json');
+    test('JSONAccessor', async () => {
+        const accessor = await storage.accessAsJSON('config.json');
 
         expect(accessor.getOne('key1')).toBeUndefined(); 
 
@@ -41,35 +41,35 @@ describe('Storage Accessor Test', () => {
         expect(accessor.getOne('key1')).not.toBeUndefined();
     });
 
-    test('TextAccessor', () => {
-        const accessor = storage.getTextAccessor('data.txt');
+    test('TextAccessor', async () => {
+        const accessor = await storage.accessAsText('data.txt');
         
-        expect(accessor.read()).toBe('');
+        expect(await accessor.read()).toBe('');
         
         const part1 = 'hello';
         const part2 = 'world';
         
         accessor.write(part1);
-        expect(accessor.read()).toBe(part1);
+        expect(await accessor.read()).toBe(part1);
 
         accessor.append(part2);
-        expect(accessor.read()).toBe(part1 + part2);
+        expect(await accessor.read()).toBe(part1 + part2);
     });
 
-    test('BinaryAccessor', () => {
-        const accessor = storage.getBinaryAccessor('data.bin');
+    test('BinaryAccessor', async () => {
+        const accessor = await storage.accessAsBinary('data.bin');
         
-        expect(accessor.read().toString()).toBe('');
+        expect((await accessor.read()).toString()).toBe('');
 
         const plainText = 'hello, world!';
         const base64Text = Buffer.from(plainText).toString('base64');
     
-        accessor.write(Buffer.from(plainText));
-        expect(accessor.readBase64()).toBe(base64Text);
-        expect(accessor.read().toString()).toBe(plainText);
+        await accessor.write(Buffer.from(plainText));
+        expect(await accessor.readBase64()).toBe(base64Text);
+        expect((await accessor.read()).toString()).toBe(plainText);
 
-        accessor.writeBase64(base64Text);
-        expect(accessor.readBase64()).toBe(base64Text);
-        expect(accessor.read().toString()).toBe(plainText);
+        await accessor.writeBase64(base64Text);
+        expect(await accessor.readBase64()).toBe(base64Text);
+        expect((await accessor.read()).toString()).toBe(plainText);
     });
 });

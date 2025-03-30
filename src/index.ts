@@ -6,10 +6,8 @@ export type {
 } from 'features/accessors';
 export {
     BinaryAccessor,
-    JSONAccessor,
     TextAccessor,
     MemBinaryAccessor,
-    MemJSONAccessor,
     MemTextAccessor,
 } from 'features/accessors';
 
@@ -34,8 +32,4 @@ export {
     type Accesses,
     type AccessType
 } from 'features/StorageAccess';
-export {
-    type JSONTree,
-    JSONType
-} from 'types/json'
 

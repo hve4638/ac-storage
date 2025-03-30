@@ -42,26 +42,26 @@ describe('Storage Accessor Test', () => {
                     array : [],
                 };
             },
-            create(ac, path, ...args) {
+            async create(ac, path, ...args) {
                 accessLog.push(`array.create`);
             },
-            load(ac, path, ...args) {
+            async load(ac, path, ...args) {
                 accessLog.push(`array.load`);
             },
-            save() {
+            async save() {
                 accessLog.push(`array.save`);
             },
-            exists() {
+            async exists() {
                 accessLog.push(`array.exists`);
                 return true;
             },
-            move() {
+            async move() {
                 accessLog.push(`array.move`);
             },
-            copy() {
+            async copy() {
                 accessLog.push(`array.copy`);
             },
-            destroy() {
+            async destroy() {
                 accessLog.push(`array.destroy`);
             }
         });
@@ -73,26 +73,26 @@ describe('Storage Accessor Test', () => {
                     value : initValue,
                 };
             },
-            create(ac, path, ...args) {
+            async create(ac, path, ...args) {
                 accessLog.push(`value.create`);
             },
-            load(ac, path, ...args) {
+            async load(ac, path, ...args) {
                 accessLog.push(`value.load`);
             },
-            save() {
+            async save() {
                 accessLog.push(`value.save`);
             },
-            exists() {
+            async exists() {
                 accessLog.push(`value.exists`);
                 return true;
             },
-            move() {
+            async move() {
                 accessLog.push(`value.move`);
             },
-            copy() {
+            async copy() {
                 accessLog.push(`value.copy`);
             },
-            destroy() {
+            async destroy() {
                 accessLog.push(`value.destroy`);
             }
         });
@@ -101,20 +101,20 @@ describe('Storage Accessor Test', () => {
         storage.dropAll();
     });
 
-    test('CustomAccessor', () => {
-        const acItemArray = storage.access('item.array', 'array') as any;
+    test('CustomAccessor', async () => {
+        const acItemArray = await storage.access('item.array', 'array') as any;
         expect(acItemArray.array).toEqual([]);
         
-        const acA = storage.access('a.value', 'value') as any;
+        const acA = await storage.access('a.value', 'value') as any;
         expect(acA.value).toEqual(0);
 
-        const acB = storage.access('b.value', 'value') as any;
+        const acB = await storage.access('b.value', 'value') as any;
         expect(acB.value).toEqual(1);
     });
     
-    test('handler test', () => {
-        storage.access('item.array', 'array');
-        storage.drop('item.array');
+    test('handler test', async () => {
+        await storage.access('item.array', 'array');
+        await storage.drop('item.array');
         expect(accessLog).toEqual([
             'array.init',
             'array.exists',
@@ -124,10 +124,10 @@ describe('Storage Accessor Test', () => {
 
         accessLog.length = 0;
         
-        storage.access('a.value', 'value');
-        storage.access('b.value', 'value');
-        storage.drop('a.value');
-        storage.drop('b.value');
+        await storage.access('a.value', 'value');
+        await storage.access('b.value', 'value');
+        await storage.drop('a.value');
+        await storage.drop('b.value');
         expect(accessLog).toEqual([
             'value.init',
             'value.exists',

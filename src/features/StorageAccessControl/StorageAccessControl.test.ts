@@ -10,7 +10,7 @@ describe('StorageAccessControl Test', () => {
                 accesses.push(identifier);
                 return {} as any;
             },
-            onRelease: (identifier) => {},
+            onRelease: async (identifier) => {},
             onChainDependency: (idDependBy, idDependTo) => {}
         });
 
@@ -28,21 +28,21 @@ describe('StorageAccessControl Test', () => {
 
         
         // 등록되지 않은 파일
-        expect(()=>ac.access('cache.json', 'text')).toThrow(NotRegisterError);
+        expect(ac.access('cache.json', 'text')).rejects.toThrow(NotRegisterError);
 
         // 잘못된 접근 타입
-        expect(()=>ac.access('config.json', 'text')).toThrow(AccessDeniedError);
+        expect(ac.access('config.json', 'text')).rejects.toThrow(AccessDeniedError);
     });
 
-    test('access dir', ()=>{
+    test('access dir', async ()=>{
         const accesses:string[] = [];
         const accessesDir:[string, AccessTree][] = [];
         const ac = new StorageAccessControl({
-            onAccess: (identifier, accessType) => {
+            onAccess: async (identifier, accessType) => {
                 accesses.push(identifier);
                 return {} as any;
             },
-            onRelease: (identifier) => {},
+            onRelease: async (identifier) => {},
             onChainDependency(idDependBy, idDependTo) {},
         });
 
@@ -58,29 +58,29 @@ describe('StorageAccessControl Test', () => {
         }
         ac.register(fullTree);
         
-        ac.access('base:config.json', 'json');
+        await ac.access('base:config.json', 'json');
         expect(accesses).toEqual([ 'base', 'base:config.json' ]);
         
         accesses.length = 0;
         accessesDir.length = 0;
-        ac.access('layer1:layer2:data.txt', 'text');
+        await ac.access('layer1:layer2:data.txt', 'text');
         expect(accesses).toEqual([
             'layer1',
             'layer1:layer2',
             'layer1:layer2:data.txt'
         ]);
         
-        expect(()=>ac.access('base', 'text')).toThrow(DirectoryAccessError);
-        expect(()=>ac.access('layer1', 'text')).toThrow(DirectoryAccessError);
-        expect(()=>ac.access('layer1:layer2', 'text')).toThrow(DirectoryAccessError);
+        expect(ac.access('base', 'text')).rejects.toThrow(DirectoryAccessError);
+        expect(ac.access('layer1', 'text')).rejects.toThrow(DirectoryAccessError);
+        expect(ac.access('layer1:layer2', 'text')).rejects.toThrow(DirectoryAccessError);
     });
 
     
-    test('dependency', ()=>{
+    test('dependency', async ()=>{
         const dependency:{from:string, to:string}[] = [];
         const ac = new StorageAccessControl({
-            onAccess: (identifier, accessType) => { return {} as any;},
-            onRelease: (identifier) => {},
+            onAccess: async (identifier, accessType) => { return {} as any;},
+            onRelease: async (identifier) => {},
             onChainDependency(idDependBy, idDependTo) {
                 dependency.push({from:idDependBy, to:idDependTo});
             },
@@ -100,14 +100,14 @@ describe('StorageAccessControl Test', () => {
         }
         ac.register(fullTree);
         
-        ac.access('base:config.json', 'json');
+        await ac.access('base:config.json', 'json');
         expect(dependency).toEqual([
             dep('', 'base'),
             dep('base', 'base:config.json')
         ]);
         dependency.length = 0;
 
-        ac.access('layer1:layer2:data.txt', 'text');
+        await ac.access('layer1:layer2:data.txt', 'text');
         expect(dependency).toEqual([
             dep('', 'layer1'),
             dep('layer1', 'layer1:layer2'),

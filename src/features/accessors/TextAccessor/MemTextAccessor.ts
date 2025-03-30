@@ -1,26 +1,26 @@
 
-import type { ITextAccessor } from '../types';
+import { type ITextAccessor } from './types';
 
 class MemTextAccessor implements ITextAccessor {
     #dropped:boolean = false;
     #contents:string = '';
 
-    hasExistingData() {
+    async hasExistingData() {
         return false;
     }
-    write(text:string) {
+    async write(text:string) {
         this.#contents = text;
     }
-    append(text:string) {
+    async append(text:string) {
         this.#contents += text;
     }
-    read():string {
+    async read() {
         return this.#contents;
     }
 
-    commit() {}
+    async save() {}
     get dropped() { return this.#dropped; }
-    drop() { this.#dropped = true; }
+    async drop() { this.#dropped = true; }
 }
 
 export default MemTextAccessor;

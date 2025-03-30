@@ -1,6 +1,6 @@
 import deepEqual from 'fast-deep-equal';
 
-import { IAccessorManager, IBinaryAccessor } from '../types';
+import { IAccessorManager } from '../types';
 import DirectoryAccessor from './DirectoryAccessor';
 import MemDirectoryAccessor from './MemDirectoryAccessor';
 import { IDirectoryAccessor } from './types';
@@ -24,22 +24,23 @@ class DirectoryAccessorManager implements IAccessorManager<IDirectoryAccessor> {
         this.tree = tree;
     }
 
-    create() {
+    async create() {
         this.accessor.create();
     }
-    load() {
+    async load() {
         
     }
-    exists(): boolean {
+    async exists() {
         return this.accessor.exists();
     }
-    move(ac:IAccessorManager<DirectoryAccessor>) {
-        const newAC = this.copy(ac);
-        this.drop();
+    async move(acm:IAccessorManager<DirectoryAccessor>) {
+        const newAC = this.copy(acm);
+        await acm.commit();
+        await this.drop();
         
         return newAC;
     }
-    copy(ac:IAccessorManager<DirectoryAccessor>) {
+    async copy(ac:IAccessorManager<DirectoryAccessor>) {
         this.accessor.copy(ac.accessor);
     }
 
@@ -49,10 +50,10 @@ class DirectoryAccessorManager implements IAccessorManager<IDirectoryAccessor> {
         return deepEqual(this.tree, other.tree);
     }
     
-    drop() {
+    async drop() {
         this.accessor.drop();
     }
-    commit() {
+    async commit() {
         
     }
     isDropped() {

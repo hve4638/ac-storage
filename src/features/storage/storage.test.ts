@@ -27,18 +27,16 @@ describe('ACStorage Test', () => {
         storage.dropAll();
     });
 
-    test('access unregistered storage', () => {
-        expect(()=>storage.getTextAccessor('unregistered.txt')).toThrow(NotRegisterError)
+    test('access unregistered storage', async () => {
+        await expect(storage.accessAsText('unregistered.txt')).rejects.toThrow(NotRegisterError)
     });
     
-    test('access registered storage', () => {
-        storage.register({
-            'config.json' : StorageAccess.JSON(),
-        });
-        storage.getJSONAccessor('config.json');
+    test('access registered storage', async () => {
+        storage.register({ 'config.json' : StorageAccess.Text() });
+        storage.accessAsText('config.json');
     });
 
-    test('access directory', () => {
-        expect(()=>storage.getTextAccessor('layer1')).toThrow(DirectoryAccessError);
+    test('access directory', async () => {
+        await expect(async ()=>await storage.accessAsText('layer1')).rejects.toThrow(DirectoryAccessError);
     });
 });
