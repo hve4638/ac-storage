@@ -5,6 +5,7 @@ export { JSONAccessorManager, } from './JSONAccessor';
 export { BinaryAccessorManager, MemBinaryAccessor, BinaryAccessor } from './BinaryAccessor';
 export { TextAccessorManager, MemTextAccessor, TextAccessor } from './TextAccessor';
 export { CustomAccessorManager } from './CustomAccessor';
+export { JSONAccessor, MemJSONAccessor } from '@hve/json-accessor';
 
 export type { IBinaryAccessor } from './BinaryAccessor';
 export type { ITextAccessor } from './TextAccessor';

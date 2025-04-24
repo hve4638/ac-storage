@@ -99,7 +99,7 @@ class ACStorage implements IACStorage {
                     if (!event) {
                         throw new StorageError('Invalid access type');
                     }
-                    const ac = event.init(targetPath, ...sa.args);
+                    const ac = await event.init(targetPath, ...sa.args);
                     acm = CustomAccessorManager.from(ac, {
                         customId: sa.id,
                         event,

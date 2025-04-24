@@ -1,9 +1,9 @@
 import StorageAccess from 'features/StorageAccess';
-import MemACStorage from './MemACStorage';
-import { IACStorage } from './types';
+import MemACStorage from '../MemACStorage';
+import { IACStorage } from '../types';
 import path from 'path';
 import { TEST_PATH } from 'data/test';
-import ACStorage from './ACStorage';
+import ACStorage from '../ACStorage';
 
 describe('Accessor Drop', () => {
     const testDirectory = path.join(TEST_PATH, 'ac-drop');

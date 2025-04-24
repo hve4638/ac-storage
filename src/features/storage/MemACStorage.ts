@@ -37,7 +37,7 @@ class MemACStorage extends ACStorage {
                     if (!event) {
                         throw new StorageError('Invalid access type');
                     }
-                    const ac = event.init(null as any, ...sa.args);
+                    const ac = await event.init(null as any, ...sa.args);
                     acm = CustomAccessorManager.from(ac, {
                         customId: sa.id,
                         event,
@@ -47,7 +47,7 @@ class MemACStorage extends ACStorage {
                     break;
                 default:
                     // 기본 타입 이외에는 custom 타입으로 wrap되기 때문에 이 경우가 발생하지 않음
-                    throw new StorageError('Invalid access type');
+                    throw new StorageError('Logic Error : Invalid access type');
                     break;
             }
             if (!acm.exists()) acm.create();

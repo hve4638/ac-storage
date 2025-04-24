@@ -1,5 +1,5 @@
 export type AccessorEvent<AC={}> = {
-    init: (actualPath:string|null, ...args:any[])=>AC;
+    init: (actualPath:string|null, ...args:any[])=>Promise<AC>;
     
     /**
      * 신규 파일 생성 시 호출

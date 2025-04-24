@@ -35,7 +35,7 @@ describe('Storage Accessor Test', () => {
         });
         storage.addAccessEvent('array', {
             ...ACCESS_EVENT_TEMPLATE,
-            init(acutalPath) {
+            async init(acutalPath) {
                 accessLog.push(`array.init`);
                 return {
                     acutalPath,
@@ -66,7 +66,7 @@ describe('Storage Accessor Test', () => {
             }
         });
         storage.addAccessEvent('value', {
-            init(acutalPath, initValue) {
+            async init(acutalPath, initValue) {
                 accessLog.push(`value.init`);
                 return {
                     acutalPath,

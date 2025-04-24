@@ -1,3 +1,8 @@
+export {
+    JSONType,
+    type JSONTree,
+    type IJSONFS,
+} from '@hve/json-accessor'
 export type {
     IBinaryAccessor,
     IJSONAccessor,
@@ -7,8 +12,10 @@ export type {
 export {
     BinaryAccessor,
     TextAccessor,
+    JSONAccessor,
     MemBinaryAccessor,
     MemTextAccessor,
+    MemJSONAccessor,
 } from 'features/accessors';
 
 export {
