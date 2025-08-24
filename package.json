@@ -1,6 +1,6 @@
 {
   "name": "ac-storage",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "main": "./dist/bundle.cjs",
   "module": "./dist/bundle.mjs",
   "types": "./dist/index.d.ts",

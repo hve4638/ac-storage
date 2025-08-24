@@ -35,15 +35,15 @@ class ACSubStorage implements IACSubStorage {
     }
 
     async dropDir(identifier:string) {
-        await this.dropDir(this.#prefix + ':' + identifier);
+        await this.#master.dropDir(this.#prefix + ':' + identifier);
     }
 
     async drop(identifier:string) {
-        await this.drop(this.#prefix + ':' + identifier);
+        await this.#master.drop(this.#prefix + ':' + identifier);
     }
     
     async dropAll() {
-        await this.dropDir(this.#prefix);
+        await this.#master.dropDir(this.#prefix);
     }
 
     async commit(identifier:string='') {
