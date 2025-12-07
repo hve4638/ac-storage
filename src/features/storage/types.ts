@@ -33,6 +33,17 @@ export interface IACSubStorage {
     accessAsJSON(identifier:string):Promise<IJSONAccessor>;
     accessAsText(identifier:string):Promise<ITextAccessor>;
     accessAsBinary(identifier:string):Promise<IBinaryAccessor>;
+
+    create(identifier:string, accessType:string):Promise<unknown>;
+    createAsJSON(identifier:string):Promise<IJSONAccessor>;
+    createAsText(identifier:string):Promise<ITextAccessor>;
+    createAsBinary(identifier:string):Promise<IBinaryAccessor>;
+
+    open(identifier:string, accessType:string):Promise<unknown>;
+    openAsJSON(identifier:string):Promise<IJSONAccessor>;
+    openAsText(identifier:string):Promise<ITextAccessor>;
+    openAsBinary(identifier:string):Promise<IBinaryAccessor>;
+
     copy(oldIdentifier:string, newIdentifier:string):Promise<void>;
     move(oldIdentifier:string, newIdentifier:string):Promise<void>;
     

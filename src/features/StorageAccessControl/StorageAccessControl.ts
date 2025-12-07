@@ -136,6 +136,17 @@ class StorageAccessControl {
         }
     }
 
+    validateAccess(identifier: string, accessType: string): Accesses {
+        const walked = this.accessTree.walk(identifier, { allowIntermediate: true });
+        if (!walked) {
+            throw new NotRegisterError(`'${identifier}' is not registered.`);
+        }
+        if (this.checkAccessIsDirectory(walked.value)) {
+            throw new DirectoryAccessError(`'${identifier}' is directory.`);
+        }
+        return this.validateAndResolveAccess(walked.value, accessType, identifier);
+    }
+
     validateDirectoryPath(identifier:string) {
         const walked = this.accessTree.walk(identifier, { allowIntermediate:true });
         if (!walked || !this.checkAccessIsDirectory(walked.value)) {

@@ -27,6 +27,33 @@ class ACSubStorage implements IACSubStorage {
     async accessAsBinary(identifier:string):Promise<IBinaryAccessor> {
         return await this.access(identifier, 'binary') as IBinaryAccessor;
     }
+
+    async create(identifier:string, accessType:string):Promise<unknown> {
+        return await this.#master.create(this.#prefix + ':' + identifier, accessType);
+    }
+    async createAsJSON(identifier:string):Promise<IJSONAccessor> {
+        return await this.create(identifier, 'json') as IJSONAccessor;
+    }
+    async createAsText(identifier:string):Promise<ITextAccessor> {
+        return await this.create(identifier, 'text') as ITextAccessor;
+    }
+    async createAsBinary(identifier:string):Promise<IBinaryAccessor> {
+        return await this.create(identifier, 'binary') as IBinaryAccessor;
+    }
+
+    async open(identifier:string, accessType:string):Promise<unknown> {
+        return await this.#master.open(this.#prefix + ':' + identifier, accessType);
+    }
+    async openAsJSON(identifier:string):Promise<IJSONAccessor> {
+        return await this.open(identifier, 'json') as IJSONAccessor;
+    }
+    async openAsText(identifier:string):Promise<ITextAccessor> {
+        return await this.open(identifier, 'text') as ITextAccessor;
+    }
+    async openAsBinary(identifier:string):Promise<IBinaryAccessor> {
+        return await this.open(identifier, 'binary') as IBinaryAccessor;
+    }
+
     async copy(oldIdentifier:string, newIdentifier:string) {
         await this.#master.copy(this.#prefix + ':' + oldIdentifier, this.#prefix + ':' + newIdentifier);
     }

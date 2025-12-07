@@ -70,54 +70,88 @@ class ACStorage implements IACStorage {
         fs.writeFileSync(this.cachePath, cacheData, 'utf8');
     }
 
+    protected async getOrCreateAccessorFromAccess(
+        identifier: string,
+        sa: Accesses,
+        mode: 'create' | 'open' | 'access'
+    ): Promise<IAccessorManager<unknown>> {
+        const targetPath = path.join(this.basePath, identifier.replaceAll(':', '/'));
+        this.eventListeners.access?.(identifier, sa);
+
+        let item = this.accessors.get(identifier);
+        if (item != undefined && !item.isDropped()) {
+            if (mode === 'create') {
+                throw new StorageError(`File '${identifier}' already exists in memory`);
+            }
+            return item;
+        }
+        
+        let acm:IAccessorManager<unknown>;
+        switch(sa.accessType) {
+            case 'directory':
+                acm = DirectoryAccessorManager.fromFS(targetPath, sa.tree);
+                break;
+            case 'json':
+                acm = JSONAccessorManager.fromFS(targetPath, sa.structure);
+                break;
+            case 'binary':
+                acm = BinaryAccessorManager.fromFS(targetPath);
+                break;
+            case 'text':
+                acm = TextAccessorManager.fromFS(targetPath);
+                break;
+            case 'custom':
+                const event = this.customAccessEvents[sa.id];
+                if (!event) {
+                    throw new StorageError('Invalid access type');
+                }
+                const ac = await event.init(targetPath, ...sa.args);
+                acm = CustomAccessorManager.from(ac, {
+                    customId: sa.id,
+                    event,
+                    actualPath: targetPath,
+                    customArgs: sa.args,
+                });
+                break;
+            default:
+                throw new StorageError('Invalid access type');
+                break;
+        }
+
+        const exists = await acm.exists();
+
+        if (mode === 'create') {
+            if (exists) {
+                throw new StorageError(`File '${identifier}' already exists on disk`);
+            }
+            await acm.create();
+        } else if (mode === 'open') {
+            if (!exists) {
+                throw new StorageError(`File '${identifier}' does not exist`);
+            }
+            await acm.load();
+        } else {
+            if (!exists) await acm.create();
+            else await acm.load();
+        }
+        
+        this.accessCache[identifier] = sa.accessType !== 'custom' ? sa.accessType : sa.id;
+        this.accessors.set(identifier, acm);
+        return acm;
+    }
+
+    protected async getOrCreateAccessor(
+        identifier: string,
+        accessType: string,
+        mode: 'create' | 'open' | 'access'
+    ): Promise<IAccessorManager<unknown>> {
+        const sa = this.accessControl.validateAccess(identifier, accessType);
+        return await this.getOrCreateAccessorFromAccess(identifier, sa, mode);
+    }
+
     protected initAccessControl():StorageAccessControl {
         const onAccess = async (identifier:string, sa:Accesses) => {
-            const targetPath = path.join(this.basePath, identifier.replaceAll(':', '/'));
-            this.eventListeners.access?.(identifier, sa);
-
-            let item = this.accessors.get(identifier);
-            if (item != undefined && !item.isDropped()) {
-                return item;
-            }
-            
-            let acm:IAccessorManager<unknown>;
-            switch(sa.accessType) {
-                case 'directory':
-                    acm = DirectoryAccessorManager.fromFS(targetPath, sa.tree);
-                    break;
-                case 'json':
-                    acm = JSONAccessorManager.fromFS(targetPath, sa.structure);
-                    break;
-                case 'binary':
-                    acm = BinaryAccessorManager.fromFS(targetPath);
-                    break;
-                case 'text':
-                    acm = TextAccessorManager.fromFS(targetPath);
-                    break;
-                case 'custom':
-                    const event = this.customAccessEvents[sa.id];
-                    if (!event) {
-                        throw new StorageError('Invalid access type');
-                    }
-                    const ac = await event.init(targetPath, ...sa.args);
-                    acm = CustomAccessorManager.from(ac, {
-                        customId: sa.id,
-                        event,
-                        actualPath: targetPath,
-                        customArgs: sa.args,
-                    });
-                    break;
-                default:
-                    // 기본 타입 이외에는 custom 타입으로 wrap되기 때문에 이 경우가 발생하지 않음
-                    throw new StorageError('Invalid access type');
-                    break;
-            }
-            if (!await acm.exists()) await acm.create();
-            else await acm.load();
-            
-            this.accessCache[identifier] = sa.accessType !== 'custom' ? sa.accessType : sa.id;
-            this.accessors.set(identifier, acm);
-            return acm;
+            return await this.getOrCreateAccessorFromAccess(identifier, sa, 'access');
         }
         const onDestroy = async (identifier:string) => {
             const accessor = this.accessors.get(identifier);
@@ -189,6 +223,35 @@ class ACStorage implements IACStorage {
     async accessAsBinary(identifier:string):Promise<IBinaryAccessor> {
         return await this.access(identifier, 'binary') as IBinaryAccessor;
     }
+
+    async create(identifier:string, accessType:string):Promise<unknown> {
+        const acm = await this.getOrCreateAccessor(identifier, accessType, 'create');
+        return acm.accessor;
+    }
+    async createAsJSON(identifier:string):Promise<IJSONAccessor> {
+        return await this.create(identifier, 'json') as IJSONAccessor;
+    }
+    async createAsText(identifier:string):Promise<ITextAccessor> {
+        return await this.create(identifier, 'text') as ITextAccessor;
+    }
+    async createAsBinary(identifier:string):Promise<IBinaryAccessor> {
+        return await this.create(identifier, 'binary') as IBinaryAccessor;
+    }
+
+    async open(identifier:string, accessType:string):Promise<unknown> {
+        const acm = await this.getOrCreateAccessor(identifier, accessType, 'open');
+        return acm.accessor;
+    }
+    async openAsJSON(identifier:string):Promise<IJSONAccessor> {
+        return await this.open(identifier, 'json') as IJSONAccessor;
+    }
+    async openAsText(identifier:string):Promise<ITextAccessor> {
+        return await this.open(identifier, 'text') as ITextAccessor;
+    }
+    async openAsBinary(identifier:string):Promise<IBinaryAccessor> {
+        return await this.open(identifier, 'binary') as IBinaryAccessor;
+    }
+
     async copy(oldIdentifier:string, newIdentifier:string) {
         const accessType = this.validateAndGetAccessTypePair(oldIdentifier, newIdentifier);
         await this.commit(oldIdentifier);

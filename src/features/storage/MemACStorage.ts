@@ -9,53 +9,78 @@ class MemACStorage extends ACStorage {
         super('', { noCache: true });
     }
 
+    override async getOrCreateAccessorFromAccess(
+        identifier: string,
+        sa: Accesses,
+        mode: 'create' | 'open' | 'access'
+    ): Promise<IAccessorManager<unknown>> {
+        this.eventListeners.access?.(identifier, sa);
+
+        let item = this.accessors.get(identifier);
+        if (item != undefined && !item.isDropped()) {
+            if (mode === 'create') {
+                throw new StorageError(`File '${identifier}' already exists in memory`);
+            }
+            return item;
+        }
+        
+        let acm:IAccessorManager<unknown>;
+        switch(sa.accessType) {
+            case 'directory':
+                acm = DirectoryAccessorManager.fromMemory(sa.tree);
+                break;
+            case 'json':
+                acm = JSONAccessorManager.fromMemory(sa.structure);
+                break;
+            case 'binary':
+                acm = BinaryAccessorManager.fromMemory();
+                break;
+            case 'text':
+                acm = TextAccessorManager.fromMemory();
+                break;
+            case 'custom':
+                const event = this.customAccessEvents[sa.id];
+                if (!event) {
+                    throw new StorageError('Invalid access type');
+                }
+                const ac = await event.init(null as any, ...sa.args);
+                acm = CustomAccessorManager.from(ac, {
+                    customId: sa.id,
+                    event,
+                    actualPath: null as any,
+                    customArgs: sa.args,
+                });
+                break;
+            default:
+                throw new StorageError('Logic Error : Invalid access type');
+                break;
+        }
+
+        const exists = await acm.exists();
+
+        if (mode === 'create') {
+            if (exists) {
+                throw new StorageError(`File '${identifier}' already exists in memory`);
+            }
+            await acm.create();
+        } else if (mode === 'open') {
+            if (!exists) {
+                throw new StorageError(`File '${identifier}' does not exist`);
+            }
+            await acm.load();
+        } else {
+            if (!exists) await acm.create();
+            else await acm.load();
+        }
+        
+        this.accessCache[identifier] = sa.accessType !== 'custom' ? sa.accessType : sa.id;
+        this.accessors.set(identifier, acm);
+        return acm;
+    }
+
     override initAccessControl() {
         const onAccess = async (identifier:string, sa:Accesses) => {
-            this.eventListeners.access?.(identifier, sa);
-
-            let item = this.accessors.get(identifier);
-            if (item != undefined && !item.isDropped()) {
-                return item;
-            }
-            
-            let acm:IAccessorManager<unknown>;
-            switch(sa.accessType) {
-                case 'directory':
-                    acm = DirectoryAccessorManager.fromMemory(sa.tree);
-                    break;
-                case 'json':
-                    acm = JSONAccessorManager.fromMemory(sa.structure);
-                    break;
-                case 'binary':
-                    acm = BinaryAccessorManager.fromMemory();
-                    break;
-                case 'text':
-                    acm = TextAccessorManager.fromMemory();
-                    break;
-                case 'custom':
-                    const event = this.customAccessEvents[sa.id];
-                    if (!event) {
-                        throw new StorageError('Invalid access type');
-                    }
-                    const ac = await event.init(null as any, ...sa.args);
-                    acm = CustomAccessorManager.from(ac, {
-                        customId: sa.id,
-                        event,
-                        actualPath: null as any,
-                        customArgs: sa.args,
-                    });
-                    break;
-                default:
-                    // 기본 타입 이외에는 custom 타입으로 wrap되기 때문에 이 경우가 발생하지 않음
-                    throw new StorageError('Logic Error : Invalid access type');
-                    break;
-            }
-            if (!acm.exists()) acm.create();
-            else acm.load();
-            
-            this.accessCache[identifier] = sa.accessType !== 'custom' ? sa.accessType : sa.id;
-            this.accessors.set(identifier, acm);
-            return acm;
+            return await this.getOrCreateAccessorFromAccess(identifier, sa, 'access');
         }
         const onDestroy = async (identifier:string) => {
             const accessor = this.accessors.get(identifier);
