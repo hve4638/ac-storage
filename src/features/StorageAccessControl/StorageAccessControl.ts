@@ -92,7 +92,7 @@ class StorageAccessControl {
         return ac;
     }
 
-    async release(identifier:string) {
+    async destroy(identifier:string) {
         const walked = this.accessTree.walk(identifier);
         if (!walked) {
             throw new NotRegisterError(`'${identifier}' is not registered.`);
@@ -101,13 +101,13 @@ class StorageAccessControl {
         if (this.checkAccessIsDirectory(walked.value)) {
             throw new DirectoryAccessError(`> '${identifier}' is directory.`);
         }
-        await this.#events.onRelease(identifier);
+        await this.#events.onDestroy(identifier);
     }
 
-    async releaseDir(identifier:string) {
+    async destroyDir(identifier:string) {
         this.validateDirectoryPath(identifier);
         
-        await this.#events.onRelease(identifier);
+        await this.#events.onDestroy(identifier);
     }
 
     getAccessType(identifier:string):string[] {

@@ -32,7 +32,7 @@ describe('Accessor Drop', () => {
     test('drop', async () => { 
         const dropLog:string[] = [];
 
-        storage.addListener('release', (identifier:string) => {
+        storage.addListener('destroy', (identifier:string) => {
             dropLog.push(identifier);
         });
 
@@ -56,7 +56,7 @@ describe('Accessor Drop', () => {
         storage.addListener('access', (identifier:string) => {
             accessLog.push(identifier);
         });
-        storage.addListener('release', (identifier:string) => {
+        storage.addListener('destroy', (identifier:string) => {
             dropLog.push(identifier);
         });
 
@@ -86,7 +86,7 @@ describe('Accessor Drop', () => {
         storage.addListener('access', (identifier:string) => {
             accessLog.push(identifier);
         });
-        storage.addListener('release', (identifier:string) => {
+        storage.addListener('destroy', (identifier:string) => {
             dropLog.push(identifier);
         });
 

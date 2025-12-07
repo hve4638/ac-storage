@@ -57,15 +57,15 @@ class MemACStorage extends ACStorage {
             this.accessors.set(identifier, acm);
             return acm;
         }
-        const onRelease = async (identifier:string) => {
+        const onDestroy = async (identifier:string) => {
             const accessor = this.accessors.get(identifier);
             if (!accessor) return;
 
             for (const child of accessor.dependent) {
-                await onRelease(child);
+                await onDestroy(child);
             }
             if (identifier === '') return;
-            this.eventListeners.release?.(identifier);
+            this.eventListeners.destroy?.(identifier);
 
             if (!accessor.isDropped()) accessor.drop();
 
@@ -82,9 +82,42 @@ class MemACStorage extends ACStorage {
 
         return new StorageAccessControl({
             onAccess,
-            onRelease,
+            onDestroy,
             onChainDependency,
         });
+    }
+
+    override async release(identifier:string) {
+        await this.commit(identifier);
+        await this.#unloadFromMemory(identifier);
+    }
+
+    override async releaseDir(identifier:string) {
+        if (identifier === '') {
+            throw new StorageError('Cannot release the root directory. use releaseAll() instead.');
+        }
+        
+        await this.commit(identifier);
+        await this.#unloadFromMemory(identifier);
+    }
+
+    override async releaseAll() {
+        await this.commitAll();
+        await this.#unloadFromMemory('');
+    }
+
+    async #unloadFromMemory(identifier:string) {
+        const accessor = this.accessors.get(identifier);
+        if (!accessor) return;
+
+        for (const child of accessor.dependent) {
+            await this.#unloadFromMemory(child);
+        }
+
+        if (identifier !== '') {
+            delete this.accessCache[identifier];
+            this.accessors.delete(identifier);
+        }
     }
 }
 

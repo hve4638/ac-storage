@@ -24,8 +24,8 @@ class ACStorage implements IACStorage {
     protected eventListeners:{
         access?: Function,
         access_dir?: Function,
-        release?: Function,
-        release_dir?: Function,
+        destroy?: Function,
+        destroy_dir?: Function,
     } = {};
 
     protected cachePath:string;
@@ -119,15 +119,15 @@ class ACStorage implements IACStorage {
             this.accessors.set(identifier, acm);
             return acm;
         }
-        const onRelease = async (identifier:string) => {
+        const onDestroy = async (identifier:string) => {
             const accessor = this.accessors.get(identifier);
             if (!accessor) return;
 
             for (const child of accessor.dependent) {
-                await onRelease(child);
+                await onDestroy(child);
             }
             if (identifier === '') return;
-            this.eventListeners.release?.(identifier);
+            this.eventListeners.destroy?.(identifier);
 
             if (!accessor.isDropped()) await accessor.drop();
 
@@ -144,18 +144,18 @@ class ACStorage implements IACStorage {
         
         return new StorageAccessControl({
             onAccess,
-            onRelease,
+            onDestroy,
             onChainDependency,
         });
     }
 
-    addListener(event: 'release'|'access', listener: Function): void {
+    addListener(event: 'destroy'|'access', listener: Function): void {
         switch(event) {
             case 'access':
                 this.eventListeners.access = listener;
                 break;
-            case 'release':
-                this.eventListeners.release = listener;
+            case 'destroy':
+                this.eventListeners.destroy = listener;
                 break;
         }
     }
@@ -244,15 +244,48 @@ class ACStorage implements IACStorage {
             throw new StorageError('Cannot drop the root directory. use dropAll() instead.');
         }
         
-        await this.accessControl.releaseDir(identifier);
+        await this.accessControl.destroyDir(identifier);
     }
 
     async drop(identifier:string) {
-        await this.accessControl.release(identifier);
+        await this.accessControl.destroy(identifier);
     }
     
     async dropAll() {
-        await this.accessControl.releaseDir('');
+        await this.accessControl.destroyDir('');
+    }
+
+    async release(identifier:string) {
+        await this.commit(identifier);
+        await this.#unloadFromMemory(identifier);
+    }
+
+    async releaseDir(identifier:string) {
+        if (identifier === '') {
+            throw new StorageError('Cannot release the root directory. use releaseAll() instead.');
+        }
+        
+        await this.commit(identifier);
+        await this.#unloadFromMemory(identifier);
+    }
+
+    async releaseAll() {
+        await this.commitAll();
+        await this.#unloadFromMemory('');
+    }
+
+    async #unloadFromMemory(identifier:string) {
+        const accessor = this.accessors.get(identifier);
+        if (!accessor) return;
+
+        for (const child of accessor.dependent) {
+            await this.#unloadFromMemory(child);
+        }
+
+        if (identifier !== '') {
+            delete this.accessCache[identifier];
+            this.accessors.delete(identifier);
+        }
     }
 
     async commit(identifier:string='') {

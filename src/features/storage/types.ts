@@ -5,7 +5,7 @@ import { AccessorEvent } from 'types';
 
 
 export interface IACStorage extends IACSubStorage {
-    addListener(event:'release'|'access', listener:Function):void;
+    addListener(event:'destroy'|'access', listener:Function):void;
 
     register(tree:AccessTree):void;
     addAccessEvent<T extends string, AC>(customId:(T extends AccessType ? never : T), event:AccessorEvent<AC>):void;
@@ -22,6 +22,7 @@ export interface IACStorage extends IACSubStorage {
     // dropDir(identifier:string):Promise<void>;
     // drop(identifier:string):Promise<void>;
     dropAll():Promise<void>;
+    releaseAll():Promise<void>;
     // commit():void;
 }
 
@@ -38,6 +39,9 @@ export interface IACSubStorage {
     dropDir(identifier:string):Promise<void>;
     drop(identifier:string):Promise<void>;
     dropAll():Promise<void>;
+    release(identifier:string):Promise<void>;
+    releaseDir(identifier:string):Promise<void>;
+    releaseAll():Promise<void>;
     commit(identifier:string):Promise<void>;
     commitAll():Promise<void>;
 }

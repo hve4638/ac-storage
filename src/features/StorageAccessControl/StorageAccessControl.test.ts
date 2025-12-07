@@ -10,7 +10,7 @@ describe('StorageAccessControl Test', () => {
                 accesses.push(identifier);
                 return {} as any;
             },
-            onRelease: async (identifier) => {},
+            onDestroy: async (identifier) => {},
             onChainDependency: (idDependBy, idDependTo) => {}
         });
 
@@ -42,7 +42,7 @@ describe('StorageAccessControl Test', () => {
                 accesses.push(identifier);
                 return {} as any;
             },
-            onRelease: async (identifier) => {},
+            onDestroy: async (identifier) => {},
             onChainDependency(idDependBy, idDependTo) {},
         });
 
@@ -80,7 +80,7 @@ describe('StorageAccessControl Test', () => {
         const dependency:{from:string, to:string}[] = [];
         const ac = new StorageAccessControl({
             onAccess: async (identifier, accessType) => { return {} as any;},
-            onRelease: async (identifier) => {},
+            onDestroy: async (identifier) => {},
             onChainDependency(idDependBy, idDependTo) {
                 dependency.push({from:idDependBy, to:idDependTo});
             },

@@ -13,7 +13,7 @@ export type AccessTree = {
 export type StorageAccessControlEvent = {
     onAccess:(identifier:string, accessType:Accesses)=>Promise<IAccessorManager<unknown>>,
     // onAccessDir:(identifier:string, tree:AccessTree)=>void,
-    onRelease:(identifier:string)=>Promise<void>,
-    // onReleaseDir:(identifier:string)=>void,
+    onDestroy:(identifier:string)=>Promise<void>,
+    // onDestroyDir:(identifier:string)=>void,
     onChainDependency:(idDependBy:string, idDependTo:string)=>void,
 }

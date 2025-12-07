@@ -46,6 +46,18 @@ class ACSubStorage implements IACSubStorage {
         await this.#master.dropDir(this.#prefix);
     }
 
+    async release(identifier:string) {
+        await this.#master.release(this.#prefix + ':' + identifier);
+    }
+
+    async releaseDir(identifier:string) {
+        await this.#master.releaseDir(this.#prefix + ':' + identifier);
+    }
+
+    async releaseAll() {
+        await this.#master.releaseDir(this.#prefix);
+    }
+
     async commit(identifier:string='') {
         await this.#master.commit(this.#prefix + ':' + identifier);
     }
