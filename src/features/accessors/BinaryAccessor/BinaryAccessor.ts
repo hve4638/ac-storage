@@ -33,7 +33,7 @@ class BinaryAccessor implements IBinaryAccessor {
         this.#ensureNotDropped();
 
         const buffer = Buffer.from(data, 'base64');
-        this.write(buffer);
+        await this.write(buffer);
     }
     async readBase64():Promise<string> {
         this.#ensureNotDropped();
@@ -42,10 +42,11 @@ class BinaryAccessor implements IBinaryAccessor {
         return buffer.toString('base64');
     }
     async drop() {
-        this.#ensureNotDropped();
+        if (this.#dropped) return;
 
+        this.#dropped = true;
         if (existsSync(this.#filePath)) {
-            fs.rm(this.#filePath, { force: true });
+            await fs.rm(this.#filePath, { force: true });
         }
     }
     async commit() {
