@@ -339,7 +339,7 @@ describe('Electron IPC 환경 시뮬레이션', () => {
 
             // release() automatically commits changes, so 'unsaved' data is actually persisted
             // Data would only be lost if the process crashes before release()
-            expect(loadedData.unsaved).toBe('changes');
+            expect(loadedData['unsaved']).toBe('changes');
         });
 
         test('FAIL CASE: 앱 강제 종료 시뮬레이션', async () => {
@@ -368,9 +368,9 @@ describe('Electron IPC 환경 시뮬레이션', () => {
             console.log('강제 종료 후 데이터:', loadedData);
 
             // 새 설정은 저장되지 않음
-            expect(loadedData.newSetting).toBeUndefined();
+            expect(loadedData['newSetting']).toBeUndefined();
             // 기존 데이터만 유지
-            expect(loadedData.theme).toBe('dark');
+            expect(loadedData['theme']).toBe('dark');
 
             await newStorage.dropAll();
         });
@@ -520,8 +520,8 @@ describe('Electron IPC 환경 시뮬레이션', () => {
             console.log('동시 작업 후 데이터:', finalData);
 
             // 모든 변경사항이 반영되어야 함
-            expect(finalData.documents).toBeDefined();
-            expect(finalData.lastOpened).toBeDefined();
+            expect(finalData['documents']).toBeDefined();
+            expect(finalData['lastOpened']).toBeDefined();
         });
     });
 });
@@ -631,7 +631,7 @@ describe('시나리오 8: 실제 {} 발생 재현 - 강화된 테스트', () => 
         console.log('release 경쟁 후 데이터:', data);
 
         // 데이터가 유지되어야 함
-        expect(data.original).toBe('data');
+        expect(data['original']).toBe('data');
 
         await storage.dropAll();
     });
@@ -687,11 +687,11 @@ describe('시나리오 8: 실제 {} 발생 재현 - 강화된 테스트', () => 
         const data = loadedState.getAll();
 
         console.log('앱 재시작 후 상태:', {
-            version: data.version,
-            windowCount: data.windows ? Object.keys(data.windows).length : 0
+            version: data['version'],
+            windowCount: data['windows'] ? Object.keys(data['windows']).length : 0
         });
 
-        expect(data.version).toBe('1.0.0');
+        expect(data['version']).toBe('1.0.0');
 
         await newStorage.dropAll();
     });
