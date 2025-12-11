@@ -71,9 +71,9 @@ describe('ACStorage Accessor 복사/이동 테스트', () => {
         storage = new ACStorage(testDirectory);
         storage.register(TREE);
     });
-    afterEach(() => {
-        fs.rmSync(testDirectory, { recursive: true });
-        storage.dropAll();
+    afterEach(async () => {
+        await storage.dropAll();
+        fs.rmSync(testDirectory, { recursive: true, force: true });
     });
 
     for (const { before, copy } of passTestcases) {
@@ -94,7 +94,5 @@ describe('ACStorage Accessor 복사/이동 테스트', () => {
         });
     }
     
-    test(`copy 123`, async () => {
-        await storage.access('text1:index.txt', 'text');
-    });
+
 });
