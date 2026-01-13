@@ -1,5 +1,6 @@
 export {
     JSONType,
+    type ValidateJSONTree,
     type JSONTree,
     type IJSONFS,
 } from '@hve/json-accessor'
