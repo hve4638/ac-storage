@@ -66,10 +66,6 @@ export interface FileRecord {
     content: Buffer;
     /** custom accessor의 경우 id */
     customId?: string;
-    /** 생성 시간 */
-    createdAt?: string;
-    /** 수정 시간 */
-    updatedAt?: string;
 }
 
 /**

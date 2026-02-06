@@ -39,26 +39,24 @@ export class SQLiteAdapter {
         return new SQLiteAdapter(db);
     }
 
-    private initSchema(): void {
-        this.db.exec(`
-            CREATE TABLE IF NOT EXISTS _ac_meta (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            );
-            
-            CREATE TABLE IF NOT EXISTS files (
-                identifier TEXT PRIMARY KEY,
-                access_type TEXT NOT NULL,
-                content BLOB,
-                custom_id TEXT,
-                created_at TEXT,
-                updated_at TEXT
-            );
-        `);
-        
-        this.setMeta('version', SCHEMA_VERSION);
-        this.setMeta('exportedAt', new Date().toISOString());
-    }
+     private initSchema(): void {
+         this.db.exec(`
+             CREATE TABLE IF NOT EXISTS _ac_meta (
+                 key TEXT PRIMARY KEY,
+                 value TEXT
+             );
+             
+             CREATE TABLE IF NOT EXISTS files (
+                 identifier TEXT PRIMARY KEY,
+                 access_type TEXT NOT NULL,
+                 content BLOB,
+                 custom_id TEXT
+             );
+         `);
+         
+         this.setMeta('version', SCHEMA_VERSION);
+         this.setMeta('exportedAt', new Date().toISOString());
+     }
 
     setMeta(key: string, value: string): void {
         const stmt = this.db.prepare(`
@@ -75,94 +73,81 @@ export class SQLiteAdapter {
         return row?.value;
     }
 
-    insertFile(
-        identifier: string,
-        accessType: string,
-        content: Buffer,
-        customId?: string
-    ): void {
-        const now = new Date().toISOString();
-        const stmt = this.db.prepare(`
-            INSERT INTO files (identifier, access_type, content, custom_id, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `);
-        stmt.run(identifier, accessType, content, customId ?? null, now, now);
-    }
+     insertFile(
+         identifier: string,
+         accessType: string,
+         content: Buffer,
+         customId?: string
+     ): void {
+         const stmt = this.db.prepare(`
+             INSERT INTO files (identifier, access_type, content, custom_id)
+             VALUES (?, ?, ?, ?)
+         `);
+         stmt.run(identifier, accessType, content, customId ?? null);
+     }
 
-    getFile(identifier: string): FileRecord | undefined {
-        const stmt = this.db.prepare(`
-            SELECT identifier, access_type, content, custom_id, created_at, updated_at
-            FROM files WHERE identifier = ?
-        `);
-        const row = stmt.get(identifier) as {
-            identifier: string;
-            access_type: string;
-            content: Buffer;
-            custom_id: string | null;
-            created_at: string;
-            updated_at: string;
-        } | undefined;
+     getFile(identifier: string): FileRecord | undefined {
+         const stmt = this.db.prepare(`
+             SELECT identifier, access_type, content, custom_id
+             FROM files WHERE identifier = ?
+         `);
+         const row = stmt.get(identifier) as {
+             identifier: string;
+             access_type: string;
+             content: Buffer;
+             custom_id: string | null;
+         } | undefined;
 
-        if (!row) return undefined;
+         if (!row) return undefined;
 
-        return {
-            identifier: row.identifier,
-            accessType: row.access_type,
-            content: row.content,
-            customId: row.custom_id ?? undefined,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        };
-    }
+         return {
+             identifier: row.identifier,
+             accessType: row.access_type,
+             content: row.content,
+             customId: row.custom_id ?? undefined,
+         };
+     }
 
-    getAllFiles(): FileRecord[] {
-        const stmt = this.db.prepare(`
-            SELECT identifier, access_type, content, custom_id, created_at, updated_at
-            FROM files
-        `);
-        const rows = stmt.all() as Array<{
-            identifier: string;
-            access_type: string;
-            content: Buffer;
-            custom_id: string | null;
-            created_at: string;
-            updated_at: string;
-        }>;
+     getAllFiles(): FileRecord[] {
+         const stmt = this.db.prepare(`
+             SELECT identifier, access_type, content, custom_id
+             FROM files
+         `);
+         const rows = stmt.all() as Array<{
+             identifier: string;
+             access_type: string;
+             content: Buffer;
+             custom_id: string | null;
+         }>;
 
-        return rows.map(row => ({
-            identifier: row.identifier,
-            accessType: row.access_type,
-            content: row.content,
-            customId: row.custom_id ?? undefined,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        }));
-    }
+         return rows.map(row => ({
+             identifier: row.identifier,
+             accessType: row.access_type,
+             content: row.content,
+             customId: row.custom_id ?? undefined,
+         }));
+     }
 
-    getFilesByPrefix(prefix: string): FileRecord[] {
-        const stmt = this.db.prepare(`
-            SELECT identifier, access_type, content, custom_id, created_at, updated_at
-            FROM files WHERE identifier LIKE ?
-        `);
-        const pattern = prefix === '' ? '%' : `${prefix}%`;
-        const rows = stmt.all(pattern) as Array<{
-            identifier: string;
-            access_type: string;
-            content: Buffer;
-            custom_id: string | null;
-            created_at: string;
-            updated_at: string;
-        }>;
+     getFilesByPrefix(prefix: string): FileRecord[] {
+         const stmt = this.db.prepare(`
+             SELECT identifier, access_type, content, custom_id
+             FROM files WHERE identifier LIKE ?
+         `);
+         const pattern = prefix === '' ? '%' : `${prefix}%`;
+         const rows = stmt.all(pattern) as Array<{
+             identifier: string;
+             access_type: string;
+             content: Buffer;
+             custom_id: string | null;
+         }>;
 
-        return rows.map(row => ({
-            identifier: row.identifier,
-            accessType: row.access_type,
-            content: row.content,
-            customId: row.custom_id ?? undefined,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        }));
-    }
+         return rows.map(row => ({
+             identifier: row.identifier,
+             accessType: row.access_type,
+             content: row.content,
+             customId: row.custom_id ?? undefined,
+         }));
+     }
 
     getFileCount(): number {
         const stmt = this.db.prepare(`SELECT COUNT(*) as count FROM files`);
