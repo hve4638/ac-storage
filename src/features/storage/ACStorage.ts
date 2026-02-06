@@ -3,13 +3,14 @@ import * as path from 'node:path';
 import { AccessorEvent } from 'types';
 
 import { IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager, CustomAccessorManager, ICustomAccessor } from 'features/accessors';
-import StorageAccessControl, { AccessTree } from 'features/StorageAccessControl';
-import { Accesses, AccessType } from 'features/StorageAccess';
+import StorageAccessControl, { AccessTree } from '@/features/StorageAccessControl';
+import { Accesses, AccessType } from '@/features/StorageAccess';
 import { IBinaryAccessor, IJSONAccessor, ITextAccessor } from '@/features/accessors';
 import {
     DirectoryAccessorManager,
     RootAccessorManager,
-} from 'features/accessors';
+} from '@/features/accessors';
+import { StorageExporter, StorageImporter, ExportOptions, ImportOptions, ExportResult, ImportResult } from '@/features/exportImport';
 
 import ACSubStorage from './ACSubStorage';
 import { StorageError } from './errors';
@@ -370,6 +371,33 @@ class ACStorage implements IACStorage {
         }
 
         if (!accessor.isDropped()) await accessor.commit();
+    }
+
+    async exportTo(
+        identifier: string,
+        exportPath: string,
+        options: ExportOptions = {}
+    ): Promise<ExportResult> {
+        const exporter = new StorageExporter({
+            basePath: this.basePath,
+            accessCache: this.accessCache,
+            getLoadedIdentifiers: () => Array.from(this.accessors.keys()),
+            commitAll: () => this.commitAll(),
+        });
+        return exporter.export(identifier, exportPath, options);
+    }
+
+    async importFrom(
+        importPath: string,
+        targetIdentifier: string,
+        options: ImportOptions = {}
+    ): Promise<ImportResult> {
+        const importer = new StorageImporter({
+            basePath: this.basePath,
+            accessCache: this.accessCache,
+            commitAll: () => this.commitAll(),
+        });
+        return importer.import(importPath, targetIdentifier, options);
     }
 }
 

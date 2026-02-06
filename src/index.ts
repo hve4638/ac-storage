@@ -27,17 +27,30 @@ export {
     DirectoryAccessError,
     NotRegisterError,
     StorageAccessError,
-} from 'features/StorageAccessControl';
+} from '@/features/StorageAccessControl';
 export {
     type IACSubStorage,
     type IACStorage,
     ACStorage,
     MemACStorage,
     StorageError
-} from 'features/storage';
+} from '@/features/storage';
 export {
     default as StorageAccess,
     type Accesses,
     type AccessType
-} from 'features/StorageAccess';
+} from '@/features/StorageAccess';
+
+export {
+    type ExportOptions,
+    type ImportOptions,
+    type ExportResult,
+    type ImportResult,
+    ExportImportError,
+    ExportError,
+    ImportError,
+    SchemaVersionError,
+    ConflictError,
+    CorruptedDBError,
+} from '@/features/exportImport';
 
