@@ -3,7 +3,7 @@
 ## Install
 
 ```bash
-npm install ac-storage
+pnpm add ac-storage
 ```
 
 ## Example
@@ -169,4 +169,3 @@ Register a custom accessor type for handling custom file formats.
 
 **`addListener(event: 'access' | 'destroy', listener: Function): void`**  
 Add event listeners for file access and destroy events.
-
