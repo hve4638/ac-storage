@@ -20,6 +20,7 @@ export default [
                 sourcemap: true,
             },
         ],
+        external: ['better-sqlite3'],
         plugins: [
             resolve(), // Node.js 모듈 해석
             commonjs(), // 필요시 CommonJS 변환
