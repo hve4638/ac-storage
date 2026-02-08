@@ -1,7 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { ACStorage } from 'features/storage';
 import StorageAccess from 'features/StorageAccess';
+import { SQLiteAdapter } from '../SQLiteAdapter';
+import { CorruptedDBError, ImportError, SchemaVersionError } from '../errors';
 
 const TEST_DIR = path.join(__dirname, '.test-export-import');
 const STORAGE_DIR = path.join(TEST_DIR, 'storage');
@@ -103,6 +106,96 @@ describe('Export/Import Integration', () => {
     });
 
     describe('importFrom', () => {
+        it('should throw SchemaVersionError on schema version mismatch', async () => {
+            const storage1 = new ACStorage(STORAGE_DIR);
+            storage1.register({
+                'auth': {
+                    'user.json': StorageAccess.JSON(),
+                },
+            });
+
+            const user = await storage1.accessAsJSON('auth:user.json');
+            user.setOne('id', 'originalUser');
+            await storage1.commit();
+
+            const exportPath = path.join(BACKUP_DIR, 'backup-mismatch.db');
+            await storage1.exportTo('auth', exportPath);
+
+            const adapter = SQLiteAdapter.openForWrite(exportPath);
+            try {
+                adapter.setMeta('version', '0.0');
+            } finally {
+                adapter.close();
+            }
+
+            const storage2Dir = path.join(TEST_DIR, 'storage2');
+            fs.mkdirSync(storage2Dir, { recursive: true });
+
+            const storage2 = new ACStorage(storage2Dir);
+            storage2.register({
+                'restored': {
+                    'user.json': StorageAccess.JSON(),
+                },
+            });
+
+            await expect(storage2.importFrom(exportPath, 'restored'))
+                .rejects
+                .toThrow(SchemaVersionError);
+        });
+
+        it('should throw CorruptedDBError on corrupted backup file', async () => {
+            const exportPath = path.join(BACKUP_DIR, 'corrupted.db');
+            fs.writeFileSync(exportPath, 'not a sqlite db');
+
+            const storage = new ACStorage(STORAGE_DIR);
+            storage.register({
+                'restored': {
+                    'user.json': StorageAccess.JSON(),
+                },
+            });
+
+            await expect(storage.importFrom(exportPath, 'restored'))
+                .rejects
+                .toThrow(CorruptedDBError);
+        });
+
+        it('should reject legacy exports with a clear error', async () => {
+            const exportPath = path.join(BACKUP_DIR, 'legacy.db');
+            const db = new DatabaseSync(exportPath);
+            try {
+                db.exec(`
+                    CREATE TABLE IF NOT EXISTS _ac_meta (
+                        key TEXT PRIMARY KEY,
+                        value TEXT
+                    );
+                    CREATE TABLE IF NOT EXISTS files (
+                        identifier TEXT PRIMARY KEY,
+                        access_type TEXT NOT NULL,
+                        content BLOB,
+                        custom_id TEXT
+                    );
+                `);
+                db.prepare("INSERT OR REPLACE INTO _ac_meta (key, value) VALUES ('version', '1.0')").run();
+            } finally {
+                db.close();
+            }
+
+            const storage = new ACStorage(STORAGE_DIR);
+            storage.register({
+                'restored': {
+                    'user.json': StorageAccess.JSON(),
+                },
+            });
+
+            try {
+                await storage.importFrom(exportPath, 'restored');
+                throw new Error('Expected import to fail');
+            } catch (err) {
+                expect(err).toBeInstanceOf(ImportError);
+                expect((err as Error).message).toBe('Unsupported legacy export format');
+            }
+        });
+
         it('should import files from a backup', async () => {
             const storage1 = new ACStorage(STORAGE_DIR);
             storage1.register({
@@ -269,6 +362,41 @@ describe('Export/Import Integration', () => {
             
             const restoredSettings = await storage2.accessAsText('restored:settings.txt');
             expect(await restoredSettings.read()).toBe('theme=dark\nlang=en');
+        });
+
+        it('should preserve binary data through export and import cycle', async () => {
+            const storage = new ACStorage(STORAGE_DIR);
+            storage.register({
+                'data': {
+                    'blob.bin': StorageAccess.Binary(),
+                },
+            });
+
+            const original = Buffer.from([0, 255, 1, 2, 3, 4, 5]);
+            const blob = await storage.accessAsBinary('data:blob.bin');
+            await blob.write(original);
+            await storage.commit();
+
+            const exportPath = path.join(BACKUP_DIR, 'bin-backup.db');
+            await storage.exportTo('data', exportPath);
+
+            await storage.dropAll();
+
+            const storage2Dir = path.join(TEST_DIR, 'storage2');
+            fs.mkdirSync(storage2Dir, { recursive: true });
+
+            const storage2 = new ACStorage(storage2Dir);
+            storage2.register({
+                'restored': {
+                    'blob.bin': StorageAccess.Binary(),
+                },
+            });
+
+            await storage2.importFrom(exportPath, 'restored');
+
+            const restored = await storage2.accessAsBinary('restored:blob.bin');
+            const restoredBytes = await restored.read();
+            expect(restoredBytes.equals(original)).toBe(true);
         });
     });
 });

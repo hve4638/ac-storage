@@ -1,22 +1,25 @@
-import Database from 'better-sqlite3';
 import * as fs from 'node:fs';
+import { AppFile } from 'sqlite-appfile';
+
 import { FileRecord, SCHEMA_VERSION } from './types';
 import { CorruptedDBError } from './errors';
 
-export class SQLiteAdapter {
-    private db: Database.Database;
+type AnyAppFile = any;
 
-    private constructor(db: Database.Database) {
-        this.db = db;
+export class SQLiteAdapter {
+    private app: AnyAppFile;
+
+    private constructor(app: AnyAppFile) {
+        this.app = app;
     }
 
     static create(filePath: string): SQLiteAdapter {
         if (fs.existsSync(filePath)) {
             throw new Error(`File already exists: ${filePath}`);
         }
-        
-        const db = new Database(filePath);
-        const adapter = new SQLiteAdapter(db);
+
+        const app = AppFile.create(filePath) as AnyAppFile;
+        const adapter = new SQLiteAdapter(app);
         adapter.initSchema();
         return adapter;
     }
@@ -25,134 +28,93 @@ export class SQLiteAdapter {
         if (!fs.existsSync(filePath)) {
             throw new Error(`File not found: ${filePath}`);
         }
-        
-        const db = new Database(filePath, { readonly: true });
-        return new SQLiteAdapter(db);
+
+        const app = AppFile.openReadOnly(filePath) as AnyAppFile;
+        return new SQLiteAdapter(app);
     }
 
     static openForWrite(filePath: string): SQLiteAdapter {
         if (!fs.existsSync(filePath)) {
             throw new Error(`File not found: ${filePath}`);
         }
-        
-        const db = new Database(filePath);
-        return new SQLiteAdapter(db);
+
+        const app = AppFile.open(filePath) as AnyAppFile;
+        return new SQLiteAdapter(app);
     }
 
-     private initSchema(): void {
-         this.db.exec(`
-             CREATE TABLE IF NOT EXISTS _ac_meta (
-                 key TEXT PRIMARY KEY,
-                 value TEXT
-             );
-             
-             CREATE TABLE IF NOT EXISTS files (
-                 identifier TEXT PRIMARY KEY,
-                 access_type TEXT NOT NULL,
-                 content BLOB,
-                 custom_id TEXT
-             );
-         `);
-         
-         this.setMeta('version', SCHEMA_VERSION);
-         this.setMeta('exportedAt', new Date().toISOString());
-     }
+    private initSchema(): void {
+        this.setMeta('version', SCHEMA_VERSION);
+        this.setMeta('exportedAt', new Date().toISOString());
+    }
 
     setMeta(key: string, value: string): void {
-        const stmt = this.db.prepare(`
-            INSERT OR REPLACE INTO _ac_meta (key, value) VALUES (?, ?)
-        `);
-        stmt.run(key, value);
+        this.app.setMeta(key, value);
     }
 
     getMeta(key: string): string | undefined {
-        const stmt = this.db.prepare(`
-            SELECT value FROM _ac_meta WHERE key = ?
-        `);
-        const row = stmt.get(key) as { value: string } | undefined;
-        return row?.value;
+        return this.app.getMeta(key);
     }
 
-     insertFile(
-         identifier: string,
-         accessType: string,
-         content: Buffer,
-         customId?: string
-     ): void {
-         const stmt = this.db.prepare(`
-             INSERT INTO files (identifier, access_type, content, custom_id)
-             VALUES (?, ?, ?, ?)
-         `);
-         stmt.run(identifier, accessType, content, customId ?? null);
-     }
+    insertFile(
+        identifier: string,
+        accessType: string,
+        content: Buffer,
+        customId?: string
+    ): void {
+        const recordMeta: Record<string, unknown> = {
+            accessType,
+        };
+        if (customId) {
+            recordMeta['customId'] = customId;
+        }
 
-     getFile(identifier: string): FileRecord | undefined {
-         const stmt = this.db.prepare(`
-             SELECT identifier, access_type, content, custom_id
-             FROM files WHERE identifier = ?
-         `);
-         const row = stmt.get(identifier) as {
-             identifier: string;
-             access_type: string;
-             content: Buffer;
-             custom_id: string | null;
-         } | undefined;
+        const filePath = identifier.startsWith('/') ? identifier : `/${identifier}`;
+        const writeFileFn = (this.app.writeFile ?? this.app.write) as ((p: string, c: Uint8Array, o?: unknown) => void) | undefined;
+        if (typeof writeFileFn !== 'function') {
+            throw new Error('sqlite-appfile write method not found');
+        }
 
-         if (!row) return undefined;
+        writeFileFn.call(this.app, filePath, content, { metadata: recordMeta });
+    }
 
-         return {
-             identifier: row.identifier,
-             accessType: row.access_type,
-             content: row.content,
-             customId: row.custom_id ?? undefined,
-         };
-     }
+    getFile(identifier: string): FileRecord | undefined {
+        const filePath = identifier.startsWith('/') ? identifier : `/${identifier}`;
+        const files = this.getAllFiles();
+        const found = files.find(f => `/${f.identifier}` === filePath);
+        return found;
+    }
 
-     getAllFiles(): FileRecord[] {
-         const stmt = this.db.prepare(`
-             SELECT identifier, access_type, content, custom_id
-             FROM files
-         `);
-         const rows = stmt.all() as Array<{
-             identifier: string;
-             access_type: string;
-             content: Buffer;
-             custom_id: string | null;
-         }>;
+    getAllFiles(): FileRecord[] {
+        const appFiles = this.app.getAllFiles() as Array<{
+            path: string;
+            content: Uint8Array;
+            metadata: Record<string, unknown> | null;
+        }>;
 
-         return rows.map(row => ({
-             identifier: row.identifier,
-             accessType: row.access_type,
-             content: row.content,
-             customId: row.custom_id ?? undefined,
-         }));
-     }
+        return appFiles.map(f => {
+            const identifier = f.path.startsWith('/') ? f.path.slice(1) : f.path;
+            const accessType = (f.metadata?.['accessType'] as string | undefined) ?? 'binary';
+            const customId = f.metadata?.['customId'] as string | undefined;
 
-     getFilesByPrefix(prefix: string): FileRecord[] {
-         const stmt = this.db.prepare(`
-             SELECT identifier, access_type, content, custom_id
-             FROM files WHERE identifier LIKE ?
-         `);
-         const pattern = prefix === '' ? '%' : `${prefix}%`;
-         const rows = stmt.all(pattern) as Array<{
-             identifier: string;
-             access_type: string;
-             content: Buffer;
-             custom_id: string | null;
-         }>;
+            return {
+                identifier,
+                accessType,
+                content: Buffer.from(f.content),
+                ...(customId ? { customId } : {}),
+            };
+        });
+    }
 
-         return rows.map(row => ({
-             identifier: row.identifier,
-             accessType: row.access_type,
-             content: row.content,
-             customId: row.custom_id ?? undefined,
-         }));
-     }
+    getFilesByPrefix(prefix: string): FileRecord[] {
+        return this.getAllFiles().filter(f => f.identifier.startsWith(prefix));
+    }
 
     getFileCount(): number {
-        const stmt = this.db.prepare(`SELECT COUNT(*) as count FROM files`);
-        const row = stmt.get() as { count: number };
-        return row.count;
+        const listFilesFn = this.app.listFiles as ((p?: string) => string[]) | undefined;
+        if (typeof listFilesFn !== 'function') {
+            return this.getAllFiles().length;
+        }
+        return listFilesFn.call(this.app).length;
     }
 
     validateSchema(): boolean {
@@ -161,10 +123,7 @@ export class SQLiteAdapter {
             if (!version) {
                 throw new CorruptedDBError('Missing schema version');
             }
-            if (version !== SCHEMA_VERSION) {
-                return false;
-            }
-            return true;
+            return version === SCHEMA_VERSION;
         } catch (e) {
             if (e instanceof CorruptedDBError) throw e;
             throw new CorruptedDBError('Invalid database structure');
@@ -172,11 +131,11 @@ export class SQLiteAdapter {
     }
 
     transaction<T>(fn: () => T): T {
-        return this.db.transaction(fn)();
+        return this.app.transaction(fn);
     }
 
     close(): void {
-        this.db.close();
+        this.app.close();
     }
 }
 

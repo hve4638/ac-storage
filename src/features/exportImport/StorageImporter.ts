@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { SQLiteAdapter } from './SQLiteAdapter';
 import { ImportOptions, ImportResult, SCHEMA_VERSION } from './types';
 import { ImportError, SchemaVersionError, ConflictError, CorruptedDBError } from './errors';
@@ -27,6 +28,10 @@ export class StorageImporter {
 
         if (!fs.existsSync(importPath)) {
             throw new ImportError(`Import file not found: ${importPath}`);
+        }
+
+        if (this.isLegacyExport(importPath)) {
+            throw new ImportError('Unsupported legacy export format');
         }
 
         const adapter = SQLiteAdapter.open(importPath);
@@ -102,6 +107,22 @@ export class StorageImporter {
         } catch (e) {
             if (e instanceof ImportError) throw e;
             throw new CorruptedDBError('Failed to validate database schema');
+        }
+    }
+
+    private isLegacyExport(importPath: string): boolean {
+        try {
+            const db = new DatabaseSync(importPath);
+            try {
+                const row = db
+                    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='_ac_meta' LIMIT 1")
+                    .get() as { name: string } | undefined;
+                return !!row;
+            } finally {
+                db.close();
+            }
+        } catch {
+            return false;
         }
     }
 
