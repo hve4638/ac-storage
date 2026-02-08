@@ -11,6 +11,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { writeFileSync } from '@/lib/fs';
 import { TEST_PATH } from 'data/test';
 
 import { ACStorage } from 'features/storage';
@@ -347,7 +348,7 @@ describe('Electron IPC 환경 시뮬레이션', () => {
             const renderer = new RendererProcess('main', ipcHandler);
 
             // 기존 데이터
-            fs.writeFileSync(getPath('settings.json'), JSON.stringify({
+            writeFileSync(getPath('settings.json'), JSON.stringify({
                 theme: 'dark',
                 language: 'ko'
             }), 'utf8');
@@ -696,5 +697,3 @@ describe('시나리오 8: 실제 {} 발생 재현 - 강화된 테스트', () => 
         await newStorage.dropAll();
     });
 });
-
-

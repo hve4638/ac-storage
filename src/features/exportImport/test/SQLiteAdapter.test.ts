@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { writeFileSync } from '@/lib/fs';
 import { SQLiteAdapter } from '../SQLiteAdapter';
 import { SCHEMA_VERSION } from '../types';
 
@@ -33,7 +34,7 @@ describe('SQLiteAdapter', () => {
 
         it('should throw if file already exists', () => {
             const dbPath = path.join(TEST_DIR, 'existing.db');
-            fs.writeFileSync(dbPath, '');
+            writeFileSync(dbPath, '');
             
             expect(() => SQLiteAdapter.create(dbPath)).toThrow('File already exists');
         });

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { writeFileSync } from '@/lib/fs';
 import { SQLiteAdapter } from './SQLiteAdapter';
 import { ImportOptions, ImportResult, SCHEMA_VERSION } from './types';
 import { ImportError, SchemaVersionError, ConflictError, CorruptedDBError } from './errors';
@@ -70,7 +71,7 @@ export class StorageImporter {
                     fs.mkdirSync(targetDir, { recursive: true });
                 }
 
-                fs.writeFileSync(targetPath, file.content);
+                writeFileSync(targetPath, file.content);
                 
                 const accessType = file.accessType === 'custom' && file.customId 
                     ? file.customId 

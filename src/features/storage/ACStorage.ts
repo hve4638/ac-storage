@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { writeFileSync } from '@/lib/fs';
 import { AccessorEvent } from 'types';
 
 import { IAccessorManager, BinaryAccessorManager, JSONAccessorManager, TextAccessorManager, CustomAccessorManager, ICustomAccessor } from 'features/accessors';
@@ -67,8 +68,7 @@ class ACStorage implements IACStorage {
 
     protected saveCache() {
         const cacheData = JSON.stringify(this.accessCache, null, 4);
-
-        fs.writeFileSync(this.cachePath, cacheData, 'utf8');
+        writeFileSync(this.cachePath, cacheData, 'utf8');
     }
 
     protected async getOrCreateAccessorFromAccess(

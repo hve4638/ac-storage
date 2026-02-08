@@ -1,8 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { ACStorage } from 'features/storage';
-import StorageAccess from 'features/StorageAccess';
+import { writeFileSync } from '@/lib/fs';
+import { ACStorage } from '@/features/storage';
+import StorageAccess from '@/features/StorageAccess';
 import { SQLiteAdapter } from '../SQLiteAdapter';
 import { CorruptedDBError, ImportError, SchemaVersionError } from '../errors';
 
@@ -81,7 +82,7 @@ describe('Export/Import Integration', () => {
             await storage.commit();
 
             const exportPath = path.join(BACKUP_DIR, 'existing.db');
-            fs.writeFileSync(exportPath, '');
+            writeFileSync(exportPath, '');
 
             await expect(storage.exportTo('config.json', exportPath)).rejects.toThrow('already exists');
         });
@@ -97,7 +98,7 @@ describe('Export/Import Integration', () => {
             await storage.commit();
 
             const exportPath = path.join(BACKUP_DIR, 'existing.db');
-            fs.writeFileSync(exportPath, 'old content');
+            writeFileSync(exportPath, 'old content');
 
             const result = await storage.exportTo('config.json', exportPath, { overwrite: true });
 
@@ -145,7 +146,7 @@ describe('Export/Import Integration', () => {
 
         it('should throw CorruptedDBError on corrupted backup file', async () => {
             const exportPath = path.join(BACKUP_DIR, 'corrupted.db');
-            fs.writeFileSync(exportPath, 'not a sqlite db');
+            writeFileSync(exportPath, 'not a sqlite db');
 
             const storage = new ACStorage(STORAGE_DIR);
             storage.register({

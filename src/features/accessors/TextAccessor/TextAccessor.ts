@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import * as fs from 'node:fs/promises';
+import { writeFile } from '@/lib/fs';
 import type { ITextAccessor } from './types';
 import { AccessorError } from '../errors';
 
@@ -19,7 +20,7 @@ class TextAccessor implements ITextAccessor {
     }
     async write(text:string) {
         this.#ensureNotDropped();
-        await fs.writeFile(this.#filePath, text);
+        await writeFile(this.#filePath, text);
     }
     async append(text:string) {
         this.#ensureNotDropped();
@@ -40,7 +41,7 @@ class TextAccessor implements ITextAccessor {
         this.#ensureNotDropped();
 
         if (!existsSync(this.#filePath)) {
-            await fs.writeFile(this.#filePath, '');
+            await writeFile(this.#filePath, '');
         }
     }
 

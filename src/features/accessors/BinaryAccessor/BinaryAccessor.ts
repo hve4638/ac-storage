@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import * as fs from 'node:fs/promises';
+import { writeFile } from '@/lib/fs';
 import type { IBinaryAccessor } from './types';
 import { AccessorError } from '../errors';
 
@@ -17,7 +18,7 @@ class BinaryAccessor implements IBinaryAccessor {
     async write(buffer:Buffer) {
         this.#ensureNotDropped();
         
-        await fs.writeFile(this.#filePath, buffer);
+        await writeFile(this.#filePath, buffer);
     }
     async read():Promise<Buffer> {
         this.#ensureNotDropped();
